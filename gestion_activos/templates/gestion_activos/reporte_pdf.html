@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Activos</title>
+</head>
+<body>
+    <h1>Reporte de Activos</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th>Fecha de Registro</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for activo in activos %}
+                <tr>
+                    <td>{{ activo.codigo }}</td>
+                    <td>{{ activo.nombre }}</td>
+                    <td>{{ activo.descripcion }}</td>
+                    <td>{{ activo.categoria.nombre }}</td>
+                    <td>{{ activo.ubicacion.nombre }}</td>
+                    <td>{{ activo.get_estado_display }}</td>
+                    <td>{{ activo.fecha_registro }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7">No hay activos registrados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends 'gestion_activos/base.html' %}
+{% block title %}Eliminar Usuario{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4">
+  <h2 class="text-danger mb-4">¿Estás seguro de eliminar este usuario?</h2>
+
+  <p><strong>{{ obj.username }}</strong> ({{ obj.first_name }} {{ obj.last_name }})</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

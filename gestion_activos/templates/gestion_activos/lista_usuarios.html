@@ -1,0 +1,42 @@
+{% extends 'gestion_activos/base.html' %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4">
+  <h2 class="mb-4 text-primary">Usuarios Registrados</h2>
+
+  <div class="text-end mb-3">
+    <a href="{% url 'crear_usuario' %}" class="btn btn-success">Crear Usuario</a>
+  </div>
+
+  <table class="table table-bordered table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>Usuario</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Grupo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for usuario in usuarios %}
+      <tr>
+        <td>{{ usuario.username }}</td>
+        <td>{{ usuario.first_name }} {{ usuario.last_name }}</td>
+        <td>{{ usuario.email }}</td>
+        <td>{{ usuario.groups.first.name }}</td>
+        <td class="text-center">
+          <a href="{% url 'editar_usuario' usuario.pk %}" class="btn btn-warning btn-sm">Editar</a>
+          <a href="{% url 'eliminar_usuario' usuario.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center">No hay usuarios registrados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

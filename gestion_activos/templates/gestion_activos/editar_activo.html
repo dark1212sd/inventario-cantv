@@ -1,0 +1,10 @@
+{% extends 'gestion_activos/base.html' %}
+{% block content %}
+  <h2>Editar Activo: {{ activo.nombre }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar Cambios</button>
+  </form>
+  <a href="{% url 'lista_activos' %}">← Volver</a>
+{% endblock %}

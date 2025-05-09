@@ -1,0 +1,91 @@
+{% extends 'gestion_activos/base.html' %}
+{% block title %}Lista de Activos{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4">
+  <h1 class="mb-4 text-primary fw-bold">Lista de Activos</h1>
+
+  <form method="get" class="row g-2 align-items-end">
+  <div class="col-md-3">
+    <label for="estado" class="form-label">Estado</label>
+    <select name="estado" id="estado" class="form-select">
+      <option value="">Todos</option>
+      <option value="activo" {% if estado_seleccionado == "activo" %}selected{% endif %}>Activo</option>
+      <option value="mant" {% if estado_seleccionado == "mant" %}selected{% endif %}>En mantenimiento</option>
+      <option value="baja" {% if estado_seleccionado == "baja" %}selected{% endif %}>Dado de baja</option>
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label for="categoria" class="form-label">Categoría</label>
+    <select name="categoria" id="categoria" class="form-select">
+      <option value="">Todas</option>
+      {% for categoria in categorias %}
+        <option value="{{ categoria.id }}" {% if categoria_seleccionada == categoria.id|stringformat:"s" %}selected{% endif %}>
+          {{ categoria.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label for="ubicacion" class="form-label">Ubicación</label>
+    <select name="ubicacion" id="ubicacion" class="form-select">
+      <option value="">Todas</option>
+      {% for ubicacion in ubicaciones %}
+        <option value="{{ ubicacion.id }}" {% if ubicacion_seleccionada == ubicacion.id|stringformat:"s" %}selected{% endif %}>
+          {{ ubicacion.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+    <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Limpiar</a>
+  </div>
+</form>
+
+  <div class="mb-3 text-end">
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success">Registrar nuevo activo</a>
+    <a href="{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-danger mb-3">Descargar PDF</a>
+    <a href="{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-outline-success">Exportar a Excel</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-primary text-center">
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Categoría</th>
+          <th>Ubicación</th>
+          <th>Estado</th>
+          <th>Fecha de Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for activo in activos %}
+          <tr>
+            <td>{{ activo.codigo }}</td>
+            <td>{{ activo.nombre }}</td>
+            <td>{{ activo.descripcion }}</td>
+            <td>{{ activo.categoria.nombre }}</td>
+            <td>{{ activo.ubicacion.nombre }}</td>
+            <td>{{ activo.get_estado_display }}</td>
+            <td>{{ activo.fecha_registro }}</td>
+            <td class="text-center">
+              <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-sm btn-warning">Editar</a>
+              <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="text-center">No hay activos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'gestion_activos/base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4">
+  <h2 class="text-primary mb-4">{{ titulo }}</h2>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_nombre" class="form-label">Nombre de la Ubicación</label>
+      <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="id_nombre" name="nombre" value="{{ form.nombre.value }}" required>
+      {% for error in form.nombre.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label for="id_descripcion" class="form-label">Descripción</label>
+      <textarea class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}" id="id_descripcion" name="descripcion" rows="4">{{ form.descripcion.value }}</textarea>
+      {% for error in form.descripcion.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <button type="submit" class="btn btn-success">{{ titulo }}</button>
+      <a href="{% url 'lista_ubicaciones' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

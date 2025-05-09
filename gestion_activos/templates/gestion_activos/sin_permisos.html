@@ -1,0 +1,11 @@
+{% extends "gestion_activos/base.html" %}
+
+{% block title %}Acceso Denegado{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <h1 class="text-danger">Acceso Denegado</h1>
+    <p class="lead">No tienes permisos para acceder a esta sección.</p>
+    <a href="{% url 'lista_activos' %}" class="btn btn-outline-secondary mt-3">Volver al inicio</a>
+</div>
+{% endblock %}

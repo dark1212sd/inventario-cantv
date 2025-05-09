@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: inventario-cantv
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn inventario.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+    autoDeploy: true
