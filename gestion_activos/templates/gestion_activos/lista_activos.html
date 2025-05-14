@@ -48,7 +48,7 @@
 
   <div class="mb-3 text-end">
     <a href="{% url 'registrar_activo' %}" class="btn btn-success">Registrar nuevo activo</a>
-    <a href="{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-danger mb-3">Descargar PDF</a>
+    <a href="{% url 'reporte_pdf' %}{% if estado_seleccionado or categoria_seleccionada or ubicacion_seleccionada %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}{% endif %}" class="btn btn-danger mb-3">Descargar PDF</a>
     <a href="{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-outline-success">Exportar a Excel</a>
   </div>
 

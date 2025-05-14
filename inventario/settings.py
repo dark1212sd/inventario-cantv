@@ -118,8 +118,8 @@ LOGIN_REDIRECT_URL = 'lista_activos'
 LOGOUT_REDIRECT_URL = 'login'
 
 # 13. Variables extra de allauth (opcional)
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_LOGIN_METHODS = {'username'}
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_REQUIRED = False
 
 # --- fin de settings.py ---

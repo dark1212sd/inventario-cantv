@@ -11,7 +11,6 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.timezone import localtime
-from django.contrib.auth.decorators import user_passes_test
 from xhtml2pdf import pisa
 
 # your app
