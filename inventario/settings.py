@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # 3. Seguridad
 SECRET_KEY = os.getenv('SECRET_KEY')  # NO la dejes en texto
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # 4. Apps instaladas
 INSTALLED_APPS = [
@@ -74,13 +74,12 @@ WSGI_APPLICATION = 'inventario.wsgi.application'
 # 7. Base de datos (puedes cambiar a Postgres en producción)
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
+        default=os.getenv('postgresql://inventario_cantv_db_user:78W0okyU6o5WWTgrrHFxq7iZKSmBhe5N@dpg-d0qj2s3uibrs73el76p0-a/inventario_cantv_db'),
         conn_max_age=600,  # mantiene la conexión abierta
         ssl_require=True   # importante para Render
     )
 }
 
-DATABASES['default'] = dj_database_url.parse("postgresql://inventario_cantv_db_user:78W0okyU6o5WWTgrrHFxq7iZKSmBhe5N@dpg-d0qj2s3uibrs73el76p0-a.oregon-postgres.render.com/inventario_cantv_db")
 # 8. Password validators
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
@@ -120,7 +119,5 @@ LOGOUT_REDIRECT_URL = 'login'
 # 13. Variables extra de allauth (opcional)
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_REQUIRED = False
-
 # --- Seguridad base de datos ---
 DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
