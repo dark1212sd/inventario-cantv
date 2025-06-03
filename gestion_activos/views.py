@@ -14,13 +14,16 @@ from django.template.loader import render_to_string
 from django.utils.timezone import localtime
 from xhtml2pdf import pisa
 
-
 # your app
 from gestion_activos.forms import (
     ActivoForm, CategoriaForm, UbicacionForm, UsuarioForm
 )
 from gestion_activos.models import Categoria, Ubicacion, Activo
 from gestion_activos.utils.decoradores import grupo_requerido
+
+
+def es_admin_sistema(user):
+    return user.groups.filter(name='Administrador del Sistema').exists()
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)  # Solo admin

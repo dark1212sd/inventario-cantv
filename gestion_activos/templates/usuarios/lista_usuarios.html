@@ -1,15 +1,11 @@
-{% extends 'base.html' %}
-
-{% block content %}
-  <h2>Usuarios y Roles</h2>
-  <table border="1">
-    <tr><th>Usuario</th><th>Grupos</th><th>Permisos</th></tr>
-    {% for user in usuarios %}
-      <tr>
-        <td>{{ user.username }}</td>
-        <td>{{ user.groups.all|join:", " }}</td>
-        <td>{{ user.get_all_permissions|join:", " }}</td>
-      </tr>
-    {% endfor %}
-  </table>
-{% endblock %}
+<h2>Usuarios y Roles</h2>
+<table>
+  <tr><th>Usuario</th><th>Grupos</th><th>Permisos</th></tr>
+  {% for user in usuarios %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.groups.all|join:", " }}</td>
+      <td>{{ user.get_all_permissions|join:", " }}</td>
+    </tr>
+  {% endfor %}
+</table>

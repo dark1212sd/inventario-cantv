@@ -19,6 +19,7 @@ from django.urls import path
 
 from django.contrib import admin
 from django.urls import path, include
+from gestion_activos.views import lista_usuarios
 
 urlpatterns = [
     path('admin/', admin.site.urls),
