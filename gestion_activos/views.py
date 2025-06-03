@@ -3,15 +3,17 @@ from io import BytesIO
 
 # 3rd-party
 import openpyxl
+from .forms import UsuarioForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.timezone import localtime
 from xhtml2pdf import pisa
+
 
 # your app
 from gestion_activos.forms import (
@@ -19,6 +21,24 @@ from gestion_activos.forms import (
 )
 from gestion_activos.models import Categoria, Ubicacion, Activo
 from gestion_activos.utils.decoradores import grupo_requerido
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)  # Solo admin
+def lista_usuarios(request):
+    usuarios = User.objects.all()
+    return render(request, 'usuarios/lista_usuarios.html', {'usuarios': usuarios})
+
+@user_passes_test(lambda u: u.groups.filter(name='Administrador del Sistema').exists())
+def crear_usuario(request):
+    if request.method == 'POST':
+        form = UsuarioForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_usuarios')  # o cualquier otra vista
+    else:
+        form = UsuarioForm()
+    return render(request, 'usuarios/crear_usuario.html', {'form': form})
+
 
 # --- CRUD permisos de grupo ---
 @login_required

@@ -20,12 +20,20 @@ class UbicacionForm(forms.ModelForm):
         model  = Ubicacion
         fields = ['nombre', 'descripcion']
 
+from django import forms
+from django.contrib.auth.models import User, Group
 
 class UsuarioForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput, required=False)
-    grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label='Grupo')
+    grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password']
+        fields = ['username', 'email', 'password', 'grupo']
 
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+            user.groups.set([self.cleaned_data['grupo']])
+        return user

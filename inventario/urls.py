@@ -26,4 +26,5 @@ urlpatterns = [
     path('', include('gestion_activos.urls')),
     # Rutas de Allauth (si las necesitas)
     path('accounts/', include('allauth.urls')),
+    path('usuarios/', lista_usuarios, name='lista_usuarios'),
 ]

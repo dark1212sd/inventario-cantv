@@ -21,7 +21,7 @@
           <a class="nav-link d-inline" href="{% url 'lista_ubicaciones' %}">Ubicaciones</a>
 
           {% if es_admin %}
-            <a class="nav-link d-inline" href="{% url 'lista_usuarios' %}">Usuarios</a>
+           <a href="{% url 'lista_usuarios' %}">Ver Usuarios y Roles</a>
           {% endif %}
 
           <a class="nav-link d-inline" href="{% url 'logout' %}">Cerrar sesión</a>
