@@ -21,10 +21,11 @@ from django.contrib import admin
 from django.urls import path, include
 
 
+from django.contrib import admin
+from django.urls import path, include
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Todas las rutas de la app van aquí:
-    path('', include('gestion_activos.urls')),
-    # Rutas de Allauth (si las necesitas)
-    path('accounts/', include('allauth.urls')),
+    path('', include('gestion_activos.urls')),  # ← Aquí cargamos todas las rutas de tu app
+    path('accounts/', include('allauth.urls')),  # ← Si usas allauth
 ]
