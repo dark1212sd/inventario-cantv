@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.template.loader import render_to_string
+from django.contrib.auth.models import Group
 from django.utils.timezone import localtime
 from xhtml2pdf import pisa
 
@@ -21,28 +22,8 @@ from gestion_activos.forms import (
 from gestion_activos.models import Categoria, Ubicacion, Activo
 from gestion_activos.utils.decoradores import grupo_requerido
 
-
 def es_admin_sistema(user):
     return user.groups.filter(name='Administrador del Sistema').exists()
-
-@login_required
-@user_passes_test(lambda u: u.is_superuser)  # Solo admin
-def lista_usuarios(request):
-    usuarios = User.objects.all()
-    return render(request, 'usuarios/lista_usuarios.html', {'usuarios': usuarios})
-
-@user_passes_test(es_admin)
-def crear_usuario(request):
-    if request.method == 'POST':
-        form = UsuarioForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('lista_usuarios')
-    else:
-        form = UsuarioForm()
-    return render(request, 'usuarios/crear_usuario.html', {'form': form})
-
-
 # --- CRUD permisos de grupo ---
 @login_required
 @grupo_requerido('Administrador')
@@ -50,6 +31,7 @@ def lista_usuarios(request):
     usuarios = User.objects.all()
     return render(request, 'gestion_activos/lista_usuarios.html', {'usuarios': usuarios})
 
+@user_passes_test(es_admin_sistema)
 @login_required
 @grupo_requerido('Administrador')
 def crear_usuario(request):
@@ -98,6 +80,7 @@ def eliminar_usuario(request, pk):
 
 def sin_permisos(request):
     return render(request, 'gestion_activos/sin_permisos.html')
+
 # --- CRUD login ---
 def login_view(request):
     if request.method == 'POST':
@@ -193,7 +176,7 @@ def eliminar_activo(request, pk):
 @login_required
 def lista_categorias(request):
     categorias = Categoria.objects.all()
-    return render(request, 'gestion_activos/lista_categorias.html', {'categorias': categorias})
+    return render(request, 'gestion_activos/usuarios/lista_usuarios.html', {'categorias': categorias})
 
 
 @login_required
@@ -205,7 +188,7 @@ def crear_categoria(request):
             return redirect('lista_categorias')
     else:
         form = CategoriaForm()
-    return render(request, 'gestion_activos/categoria_form.html', {'form': form, 'titulo': 'Crear Categoría'})
+    return render(request, 'gestion_activos/usuarios/crear_usuario.html', {'form': form, 'titulo': 'Crear Categoría'})
 
 
 @login_required

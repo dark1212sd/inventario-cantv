@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from . import views
+from gestion_activos.views import lista_usuarios, crear_usuario
 
 
 urlpatterns = [
@@ -40,4 +41,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('reporte/pdf/', views.reporte_pdf, name='reporte_pdf'),
     path('reporte/excel/', views.exportar_excel, name='exportar_excel'),
+
+    path('usuarios/', lista_usuarios, name='lista_usuarios'),
+    path('usuarios/crear/', crear_usuario, name='crear_usuario'),
 ]
