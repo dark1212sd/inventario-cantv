@@ -19,7 +19,7 @@ from django.urls import path
 
 from django.contrib import admin
 from django.urls import path, include
-from gestion_activos.views import lista_usuarios
+from gestion_activos.views import lista_usuarios, crear_usuario
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,4 +28,5 @@ urlpatterns = [
     # Rutas de Allauth (si las necesitas)
     path('accounts/', include('allauth.urls')),
     path('usuarios/', lista_usuarios, name='lista_usuarios'),
+    path('usuarios/crear/', crear_usuario, name='crear_usuario'),
 ]

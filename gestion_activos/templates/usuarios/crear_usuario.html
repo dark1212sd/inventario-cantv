@@ -1,6 +1,10 @@
-<h2>Crear nuevo usuario</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Guardar</button>
-</form>
+{% extends "gestion_activos/base.html" %}
+{% block title %}Crear Usuario{% endblock %}
+{% block content %}
+  <h2>Crear nuevo usuario</h2>
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary" type="submit">Crear</button>
+  </form>
+{% endblock %}

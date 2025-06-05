@@ -1,4 +1,5 @@
 <h2>Usuarios y Roles</h2>
+<a href="{% url 'crear_usuario' %}" class="btn btn-success">Crear nuevo usuario</a>
 <table>
   <tr><th>Usuario</th><th>Grupos</th><th>Permisos</th></tr>
   {% for user in usuarios %}
