@@ -176,8 +176,7 @@ def eliminar_activo(request, pk):
 @login_required
 def lista_categorias(request):
     categorias = Categoria.objects.all()
-    return render(request, 'gestion_activos/usuarios/lista_usuarios.html', {'categorias': categorias})
-
+    return render(request, 'gestion_activos/lista_categorias.html', {'categorias': categorias})
 
 @login_required
 def crear_categoria(request):
