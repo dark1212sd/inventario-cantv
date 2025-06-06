@@ -20,7 +20,7 @@ from gestion_activos.forms import (
     ActivoForm, CategoriaForm, UbicacionForm, UsuarioForm
 )
 from gestion_activos.models import Categoria, Ubicacion, Activo
-from gestion_activos.utils.decoradores import grupo_requerido
+from gestion_activos.utils.decoradores import grupo_requerido, auditor_required, tecnico_required
 
 def es_admin_sistema(user):
     return user.groups.filter(name='Administrador del Sistema').exists()
@@ -132,7 +132,9 @@ def lista_activos(request):
         'es_admin': es_admin  # 👈 enviamos el valor a la plantilla
     })
 
+@login_required
 @grupo_requerido('Administrador')
+@tecnico_required
 def registrar_activo(request):
     if request.method == 'POST':
         form = ActivoForm(request.POST)
@@ -147,6 +149,7 @@ def registrar_activo(request):
     })
 
 @login_required
+@tecnico_required
 def editar_activo(request, pk):
     activo = get_object_or_404(Activo, pk=pk)
     if request.method == 'POST':
@@ -255,6 +258,7 @@ def eliminar_ubicacion(request, pk):
 
 # --- Reportes PDF ---
 @login_required
+@auditor_required
 def reporte_pdf(request):
     activos = Activo.objects.select_related('categoria', 'ubicacion').all()
 
@@ -288,6 +292,7 @@ def reporte_pdf(request):
 
 # --- Exportar a Excel ---
 @login_required
+@auditor_required
 def exportar_excel(request):
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
@@ -329,6 +334,8 @@ def exportar_excel(request):
     wb.save(response)
     return response
 
+@login_required
+@auditor_required
 def filtrar_activos(request):
     qs = Activo.objects.select_related('categoria','ubicacion').all()
     for param, field in (('estado','estado'),
