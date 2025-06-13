@@ -121,3 +121,7 @@ ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
 # --- Seguridad base de datos ---
 DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
+# settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST_USER = 'no-reply@inventario.com'
