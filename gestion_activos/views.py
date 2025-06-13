@@ -83,17 +83,18 @@ def sin_permisos(request):
 # --- CRUD login ---
 def login_view(request):
     if request.method == 'POST':
-        user = authenticate(
-            request,
-            username=request.POST['username'],
-            password=request.POST['password']
-        )
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+
         if user is not None:
             login(request, user)
             next_url = request.GET.get('next') or 'lista_activos'
             return redirect(next_url)
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
+
     return render(request, 'gestion_activos/login.html')
 
 def logout_view(request):
