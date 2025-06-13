@@ -14,13 +14,13 @@ from django.template.loader import render_to_string
 from django.contrib.auth.models import Group
 from django.utils.timezone import localtime
 from xhtml2pdf import pisa
-
+from gestion_activos.utils.decoradores import grupo_requerido
 # your app
 from gestion_activos.forms import (
     ActivoForm, CategoriaForm, UbicacionForm, UsuarioForm
 )
 from gestion_activos.models import Categoria, Ubicacion, Activo
-from gestion_activos.utils.decoradores import grupo_requerido, auditor_required, tecnico_required
+
 
 def es_admin_sistema(user):
     return user.groups.filter(name='Administrador del Sistema').exists()
@@ -31,7 +31,6 @@ def lista_usuarios(request):
     usuarios = User.objects.all()
     return render(request, 'gestion_activos/lista_usuarios.html', {'usuarios': usuarios})
 
-@user_passes_test(es_admin_sistema)
 @login_required
 @grupo_requerido('Administrador')
 def crear_usuario(request):
@@ -133,8 +132,7 @@ def lista_activos(request):
     })
 
 @login_required
-@grupo_requerido('Administrador')
-@tecnico_required
+@grupo_requerido("Técnico", "Administrador")
 def registrar_activo(request):
     if request.method == 'POST':
         form = ActivoForm(request.POST)
@@ -149,7 +147,7 @@ def registrar_activo(request):
     })
 
 @login_required
-@tecnico_required
+@grupo_requerido("Técnico", "Administrador")
 def editar_activo(request, pk):
     activo = get_object_or_404(Activo, pk=pk)
     if request.method == 'POST':
@@ -165,6 +163,7 @@ def editar_activo(request, pk):
     })
 
 @login_required
+@grupo_requerido("Técnico", "Administrador")
 def eliminar_activo(request, pk):
     activo = get_object_or_404(Activo, pk=pk)
     if request.method == 'POST':
@@ -177,11 +176,13 @@ def eliminar_activo(request, pk):
 
 # --- CRUD Categorías ---
 @login_required
+@grupo_requerido('Administrador')
 def lista_categorias(request):
     categorias = Categoria.objects.all()
     return render(request, 'gestion_activos/lista_categorias.html', {'categorias': categorias})
 
 @login_required
+@grupo_requerido('Administrador')
 def crear_categoria(request):
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
@@ -194,6 +195,7 @@ def crear_categoria(request):
 
 
 @login_required
+@grupo_requerido("Administrador")
 def editar_categoria(request, pk):
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
@@ -207,6 +209,7 @@ def editar_categoria(request, pk):
 
 
 @login_required
+@grupo_requerido('Administrador')
 def eliminar_categoria(request, pk):
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
@@ -217,12 +220,14 @@ def eliminar_categoria(request, pk):
 
 # --- CRUD Ubicaciones ---
 @login_required
+@grupo_requerido('Administrador')
 def lista_ubicaciones(request):
     ubicaciones = Ubicacion.objects.all()
     return render(request, 'gestion_activos/lista_ubicaciones.html', {'ubicaciones': ubicaciones})
 
 
 @login_required
+@grupo_requerido('Administrador')
 def crear_ubicacion(request):
     if request.method == 'POST':
         form = UbicacionForm(request.POST)
@@ -235,6 +240,7 @@ def crear_ubicacion(request):
 
 
 @login_required
+@grupo_requerido("Administrador")
 def editar_ubicacion(request, pk):
     ubicacion = get_object_or_404(Ubicacion, pk=pk)
     if request.method == 'POST':
@@ -248,6 +254,7 @@ def editar_ubicacion(request, pk):
 
 
 @login_required
+@grupo_requerido("Administrador")
 def eliminar_ubicacion(request, pk):
     ubicacion = get_object_or_404(Ubicacion, pk=pk)
     if request.method == 'POST':
@@ -258,7 +265,7 @@ def eliminar_ubicacion(request, pk):
 
 # --- Reportes PDF ---
 @login_required
-@auditor_required
+@grupo_requerido("Auditor", "Administrador")
 def reporte_pdf(request):
     activos = Activo.objects.select_related('categoria', 'ubicacion').all()
 
@@ -292,7 +299,7 @@ def reporte_pdf(request):
 
 # --- Exportar a Excel ---
 @login_required
-@auditor_required
+@grupo_requerido("Auditor", "Administrador")
 def exportar_excel(request):
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
@@ -335,7 +342,6 @@ def exportar_excel(request):
     return response
 
 @login_required
-@auditor_required
 def filtrar_activos(request):
     qs = Activo.objects.select_related('categoria','ubicacion').all()
     for param, field in (('estado','estado'),
