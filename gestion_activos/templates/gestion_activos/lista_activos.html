@@ -42,7 +42,7 @@
   <a href="{% url 'registrar_activo' %}" class="btn btn-success mb-3">Registrar Nuevo Activo</a>
 {% endif %}
 
-<table class="table table-striped">
+<table class="table table-striped datatable">
   <thead>
     <tr>
       <th>Código</th>
@@ -73,4 +73,18 @@
     {% endfor %}
   </tbody>
 </table>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    $('.datatable').DataTable({
+      language: {
+        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+      },
+      paging: true,
+      searching: true,
+      ordering: true,
+      responsive: true
+    });
+  });
+</script>
 {% endblock %}
