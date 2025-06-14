@@ -213,8 +213,7 @@ def crear_categoria(request):
             return redirect('lista_categorias')
     else:
         form = CategoriaForm()
-    return render(request, 'gestion_activos/usuarios/crear_usuario.html', {'form': form, 'titulo': 'Crear Categoría'})
-
+    return render(request, 'gestion_activos/categoria_form.html', {'form': form, 'titulo': 'Crear Categoría'})
 
 @login_required
 @grupo_requerido("Administrador")
