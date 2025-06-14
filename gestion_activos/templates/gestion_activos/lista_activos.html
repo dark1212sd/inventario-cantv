@@ -4,86 +4,131 @@
 {% block title %}Lista de Activos{% endblock %}
 
 {% block content %}
-<h2>Lista de Activos</h2>
+<h1 class="mb-4">Lista de Activos</h1>
 
-<form method="get" class="mb-3 row g-2">
-  <div class="col-md-4">
-    <input type="text" name="busqueda" class="form-control" placeholder="Buscar por nombre..." value="{{ busqueda }}">
+<!-- Filtros superiores -->
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+  <div class="mb-2">
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success me-2">
+      <i class="bi bi-plus-circle"></i> Registrar Nuevo Activo
+    </a>
+    <a href="{% url 'reporte_pdf' %}" class="btn btn-danger me-2">
+      <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+    </a>
+    <a href="{% url 'exportar_excel' %}" class="btn btn-primary">
+      <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+    </a>
   </div>
-  <div class="col-md-2">
+
+  <!-- Formulario de filtros -->
+  <form method="get" class="d-flex flex-wrap gap-2 mb-2">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Buscar por nombre o descripción...">
     <select name="estado" class="form-select">
       <option value="">Estado</option>
-      <option value="nuevo" {% if estado_seleccionado == "nuevo" %}selected{% endif %}>Nuevo</option>
-      <option value="usado" {% if estado_seleccionado == "usado" %}selected{% endif %}>Usado</option>
+      <option value="funcional" {% if estado_seleccionado == 'funcional' %}selected{% endif %}>Funcional</option>
+      <option value="mantenimiento" {% if estado_seleccionado == 'mantenimiento' %}selected{% endif %}>En mantenimiento</option>
+      <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
     </select>
-  </div>
-  <div class="col-md-2">
     <select name="categoria" class="form-select">
       <option value="">Categoría</option>
-      {% for c in categorias %}
-        <option value="{{ c.id }}" {% if categoria_seleccionada == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+      {% for categoria in categorias %}
+        <option value="{{ categoria.id }}" {% if categoria_seleccionada == categoria.id|stringformat:"s" %}selected{% endif %}>
+          {{ categoria.nombre }}
+        </option>
       {% endfor %}
     </select>
-  </div>
-  <div class="col-md-2">
     <select name="ubicacion" class="form-select">
       <option value="">Ubicación</option>
-      {% for u in ubicaciones %}
-        <option value="{{ u.id }}" {% if ubicacion_seleccionada == u.id|stringformat:"s" %}selected{% endif %}>{{ u.nombre }}</option>
+      {% for ubicacion in ubicaciones %}
+        <option value="{{ ubicacion.id }}" {% if ubicacion_seleccionada == ubicacion.id|stringformat:"s" %}selected{% endif %}>
+          {{ ubicacion.nombre }}
+        </option>
       {% endfor %}
     </select>
-  </div>
-  <div class="col-md-2">
-    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-  </div>
-</form>
+    <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+  </form>
+</div>
 
-{% if es_admin %}
-  <a href="{% url 'registrar_activo' %}" class="btn btn-success mb-3">Registrar Nuevo Activo</a>
+<!-- Filtros activos -->
+{% if estado_seleccionado or categoria_seleccionada or ubicacion_seleccionada %}
+  <div class="alert alert-info">
+    <strong>Filtros aplicados:</strong>
+    {% if estado_seleccionado %} Estado: <span class="badge bg-info text-dark">{{ estado_seleccionado }}</span> {% endif %}
+    {% if categoria_seleccionada %}
+      Categoría: <span class="badge bg-info text-dark">
+        {{ categorias|get_item_by_id:categoria_seleccionada }}
+      </span>
+    {% endif %}
+    {% if ubicacion_seleccionada %}
+      Ubicación: <span class="badge bg-info text-dark">
+        {{ ubicaciones|get_item_by_id:ubicacion_seleccionada }}
+      </span>
+    {% endif %}
+  </div>
 {% endif %}
 
-<table class="table table-striped datatable">
-  <thead>
-    <tr>
-      <th>Código</th>
-      <th>Nombre</th>
-      <th>Descripción</th>
-      <th>Categoría</th>
-      <th>Ubicación</th>
-      <th>Estado</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for activo in activos %}
+<!-- Tabla -->
+<div class="table-responsive">
+  <table id="tabla-activos" class="table table-hover table-bordered align-middle">
+    <thead class="table-light">
       <tr>
-        <td>{{ activo.codigo }}</td>
-        <td>{{ activo.nombre }}</td>
-        <td>{{ activo.descripcion }}</td>
-        <td>{{ activo.categoria.nombre }}</td>
-        <td>{{ activo.ubicacion.nombre }}</td>
-        <td>{{ activo.get_estado_display }}</td>
-        <td>
-          <a href="{% url 'editar_activo' activo.id %}" class="btn btn-sm btn-warning">Editar</a>
-          <a href="{% url 'eliminar_activo' activo.id %}" class="btn btn-sm btn-danger">Eliminar</a>
-        </td>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Categoría</th>
+        <th>Ubicación</th>
+        <th>Estado</th>
+        <th class="text-center">Acciones</th>
       </tr>
-    {% empty %}
-      <tr><td colspan="7">No se encontraron activos.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      {% for activo in activos %}
+        <tr>
+          <td>{{ activo.codigo }}</td>
+          <td>{{ activo.nombre }}</td>
+          <td>{{ activo.descripcion }}</td>
+          <td>{{ activo.categoria.nombre }}</td>
+          <td>{{ activo.ubicacion.nombre }}</td>
+          <td>
+            {% if activo.estado == 'funcional' %}
+              <span class="badge bg-success">Funcional</span>
+            {% elif activo.estado == 'mantenimiento' %}
+              <span class="badge bg-warning text-dark">En mantenimiento</span>
+            {% else %}
+              <span class="badge bg-danger">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-warning btn-sm me-1">
+              <i class="bi bi-pencil-square"></i> Editar
+            </a>
+            <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-danger btn-sm">
+              <i class="bi bi-trash3-fill"></i> Eliminar
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Scripts DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    $('.datatable').DataTable({
+  $(document).ready(function () {
+    $('#tabla-activos').DataTable({
       language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
       },
-      paging: true,
-      searching: true,
-      ordering: true,
-      responsive: true
+      pagingType: 'simple_numbers',
+      order: [[1, 'asc']],
+      columnDefs: [
+        { orderable: false, targets: -1 }
+      ]
     });
   });
 </script>
