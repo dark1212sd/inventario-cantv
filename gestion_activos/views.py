@@ -3,6 +3,7 @@ from io import BytesIO
 
 # 3rd-party
 import openpyxl
+from django.db.models import Q
 from .forms import UsuarioForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
@@ -28,8 +29,15 @@ def es_admin_sistema(user):
 @login_required
 @grupo_requerido('Administrador')
 def lista_usuarios(request):
+    busqueda = request.GET.get('busqueda', '').strip()
     usuarios = User.objects.all()
-    return render(request, 'gestion_activos/lista_usuarios.html', {'usuarios': usuarios})
+    if busqueda:
+        usuarios = usuarios.filter(
+            Q(username__icontains=busqueda) | Q(email__icontains=busqueda)
+        )
+    return render(request, 'gestion_activos/lista_usuarios.html', {
+        'usuarios': usuarios,
+    })
 
 @login_required
 @grupo_requerido('Administrador')
@@ -104,10 +112,15 @@ def logout_view(request):
 # --- CRUD Activos ---
 @login_required
 def lista_activos(request):
-    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
-    categorias = Categoria.objects.all()
-    ubicaciones = Ubicacion.objects.all()
+    query = request.GET.get('busqueda', '')
+    activos = Activo.objects.select_related('categoria', 'ubicacion')
 
+    if query:
+        activos = activos.filter(
+            nombre__icontains=query
+        )
+
+    # Otros filtros existentes
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
@@ -119,7 +132,8 @@ def lista_activos(request):
     if ubicacion_id:
         activos = activos.filter(ubicacion_id=ubicacion_id)
 
-    # 👇 Aquí va la lógica de verificación de grupo
+    categorias = Categoria.objects.all()
+    ubicaciones = Ubicacion.objects.all()
     es_admin = request.user.groups.filter(name="Administrador").exists()
 
     return render(request, 'gestion_activos/lista_activos.html', {
@@ -129,7 +143,8 @@ def lista_activos(request):
         'estado_seleccionado': estado,
         'categoria_seleccionada': categoria_id,
         'ubicacion_seleccionada': ubicacion_id,
-        'es_admin': es_admin  # 👈 enviamos el valor a la plantilla
+        'es_admin': es_admin,
+        'busqueda': query,
     })
 
 @login_required
@@ -179,8 +194,14 @@ def eliminar_activo(request, pk):
 @login_required
 @grupo_requerido('Administrador')
 def lista_categorias(request):
+    query = request.GET.get('busqueda', '')
     categorias = Categoria.objects.all()
-    return render(request, 'gestion_activos/lista_categorias.html', {'categorias': categorias})
+    if query:
+        categorias = categorias.filter(nombre__icontains=query)
+    return render(request, 'gestion_activos/lista_categorias.html', {
+        'categorias': categorias,
+        'busqueda': query,
+    })
 
 @login_required
 @grupo_requerido('Administrador')
@@ -223,8 +244,14 @@ def eliminar_categoria(request, pk):
 @login_required
 @grupo_requerido('Administrador')
 def lista_ubicaciones(request):
+    query = request.GET.get('busqueda', '')
     ubicaciones = Ubicacion.objects.all()
-    return render(request, 'gestion_activos/lista_ubicaciones.html', {'ubicaciones': ubicaciones})
+    if query:
+        ubicaciones = ubicaciones.filter(nombre__icontains=query)
+    return render(request, 'gestion_activos/lista_ubicaciones.html', {
+        'ubicaciones': ubicaciones,
+        'busqueda': query,
+    })
 
 
 @login_required

@@ -1,91 +1,76 @@
-{% extends 'gestion_activos/base.html' %}
+{% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Lista de Activos{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4">
-  <h1 class="mb-4 text-primary fw-bold">Lista de Activos</h1>
+<h2>Lista de Activos</h2>
 
-  <form method="get" class="row g-2 align-items-end">
-  <div class="col-md-3">
-    <label for="estado" class="form-label">Estado</label>
-    <select name="estado" id="estado" class="form-select">
-      <option value="">Todos</option>
-      <option value="activo" {% if estado_seleccionado == "activo" %}selected{% endif %}>Activo</option>
-      <option value="mant" {% if estado_seleccionado == "mant" %}selected{% endif %}>En mantenimiento</option>
-      <option value="baja" {% if estado_seleccionado == "baja" %}selected{% endif %}>Dado de baja</option>
+<form method="get" class="mb-3 row g-2">
+  <div class="col-md-4">
+    <input type="text" name="busqueda" class="form-control" placeholder="Buscar por nombre..." value="{{ busqueda }}">
+  </div>
+  <div class="col-md-2">
+    <select name="estado" class="form-select">
+      <option value="">Estado</option>
+      <option value="nuevo" {% if estado_seleccionado == "nuevo" %}selected{% endif %}>Nuevo</option>
+      <option value="usado" {% if estado_seleccionado == "usado" %}selected{% endif %}>Usado</option>
     </select>
   </div>
-
-  <div class="col-md-3">
-    <label for="categoria" class="form-label">Categoría</label>
-    <select name="categoria" id="categoria" class="form-select">
-      <option value="">Todas</option>
-      {% for categoria in categorias %}
-        <option value="{{ categoria.id }}" {% if categoria_seleccionada == categoria.id|stringformat:"s" %}selected{% endif %}>
-          {{ categoria.nombre }}
-        </option>
+  <div class="col-md-2">
+    <select name="categoria" class="form-select">
+      <option value="">Categoría</option>
+      {% for c in categorias %}
+        <option value="{{ c.id }}" {% if categoria_seleccionada == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
       {% endfor %}
     </select>
   </div>
-
-  <div class="col-md-3">
-    <label for="ubicacion" class="form-label">Ubicación</label>
-    <select name="ubicacion" id="ubicacion" class="form-select">
-      <option value="">Todas</option>
-      {% for ubicacion in ubicaciones %}
-        <option value="{{ ubicacion.id }}" {% if ubicacion_seleccionada == ubicacion.id|stringformat:"s" %}selected{% endif %}>
-          {{ ubicacion.nombre }}
-        </option>
+  <div class="col-md-2">
+    <select name="ubicacion" class="form-select">
+      <option value="">Ubicación</option>
+      {% for u in ubicaciones %}
+        <option value="{{ u.id }}" {% if ubicacion_seleccionada == u.id|stringformat:"s" %}selected{% endif %}>{{ u.nombre }}</option>
       {% endfor %}
     </select>
   </div>
-
-  <div class="col-md-3">
-    <button type="submit" class="btn btn-primary">Filtrar</button>
-    <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Limpiar</a>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
   </div>
 </form>
 
-  <div class="mb-3 text-end">
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success">Registrar nuevo activo</a>
-    <a href="{% url 'reporte_pdf' %}{% if estado_seleccionado or categoria_seleccionada or ubicacion_seleccionada %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}{% endif %}" class="btn btn-danger mb-3">Descargar PDF</a>
-    <a href="{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-outline-success">Exportar a Excel</a>
-  </div>
+{% if es_admin %}
+  <a href="{% url 'registrar_activo' %}" class="btn btn-success mb-3">Registrar Nuevo Activo</a>
+{% endif %}
 
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped align-middle">
-      <thead class="table-primary text-center">
-        <tr>
-          <th>Código</th>
-          <th>Nombre</th>
-          <th>Descripción</th>
-          <th>Categoría</th>
-          <th>Ubicación</th>
-          <th>Estado</th>
-          <th>Fecha de Registro</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for activo in activos %}
-          <tr>
-            <td>{{ activo.codigo }}</td>
-            <td>{{ activo.nombre }}</td>
-            <td>{{ activo.descripcion }}</td>
-            <td>{{ activo.categoria.nombre }}</td>
-            <td>{{ activo.ubicacion.nombre }}</td>
-            <td>{{ activo.get_estado_display }}</td>
-            <td>{{ activo.fecha_registro }}</td>
-            <td class="text-center">
-              <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-sm btn-warning">Editar</a>
-              <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="8" class="text-center">No hay activos registrados.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Nombre</th>
+      <th>Descripción</th>
+      <th>Categoría</th>
+      <th>Ubicación</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for activo in activos %}
+      <tr>
+        <td>{{ activo.codigo }}</td>
+        <td>{{ activo.nombre }}</td>
+        <td>{{ activo.descripcion }}</td>
+        <td>{{ activo.categoria.nombre }}</td>
+        <td>{{ activo.ubicacion.nombre }}</td>
+        <td>{{ activo.get_estado_display }}</td>
+        <td>
+          <a href="{% url 'editar_activo' activo.id %}" class="btn btn-sm btn-warning">Editar</a>
+          <a href="{% url 'eliminar_activo' activo.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">No se encontraron activos.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
