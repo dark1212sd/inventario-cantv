@@ -120,7 +120,7 @@ def lista_activos(request):
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
 
-
+    # Filtro dinámico
     if estado:
         activos = activos.filter(estado=estado)
     if categoria_id:
@@ -128,7 +128,7 @@ def lista_activos(request):
     if ubicacion_id:
         activos = activos.filter(ubicacion_id=ubicacion_id)
 
-
+    # Obtener nombres para mostrar en los filtros aplicados
     categoria_nombre = ''
     ubicacion_nombre = ''
 
@@ -153,16 +153,6 @@ def lista_activos(request):
         'categoria_nombre': categoria_nombre,
         'ubicacion_nombre': ubicacion_nombre,
         'es_admin': es_admin,
-
-    return render(request, 'gestion_activos/lista_activos.html', {
-        'activos': activos,
-        'categorias': categorias,
-        'ubicaciones': ubicaciones,
-        'estado_seleccionado': estado,
-        'categoria_seleccionada': categoria_id,
-        'ubicacion_seleccionada': ubicacion_id,
-        'es_admin': es_admin,
-        'busqueda': query,
     })
 
 @login_required
