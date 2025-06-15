@@ -1,7 +1,4 @@
-# stdlib
 from io import BytesIO
-
-# 3rd-party
 import openpyxl
 from django.http import JsonResponse
 from django.core import serializers
@@ -397,7 +394,6 @@ def api_activos_filtrados(request):
     ubicacion = request.GET.get('ubicacion')
     search = request.GET.get('search', '')
 
-    # Filtramos los activos
     activos = Activo.objects.select_related('categoria', 'ubicacion').all()
 
     if estado:
@@ -422,7 +418,7 @@ def api_activos_filtrados(request):
             'descripcion': activo.descripcion,
             'categoria': activo.categoria.nombre if activo.categoria else '',
             'ubicacion': activo.ubicacion.nombre if activo.ubicacion else '',
-            'estado': activo.get_estado_display().lower(),
+            'estado': activo.get_estado_display(),  # 👈 CORREGIDO: no usar .lower()
         })
 
     return JsonResponse({'data': data})
