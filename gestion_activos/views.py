@@ -3,6 +3,8 @@ from io import BytesIO
 
 # 3rd-party
 import openpyxl
+from django.http import JsonResponse
+from django.core import serializers
 from django.db.models import Q
 from .forms import UsuarioForm
 from django.shortcuts import render, redirect, get_object_or_404
@@ -387,3 +389,29 @@ def filtrar_activos(request):
             qs = qs.filter(**{field: v})
     return qs
 
+
+@login_required
+def api_activos_filtrados(request):
+    estado = request.GET.get('estado')
+    categoria = request.GET.get('categoria')
+    ubicacion = request.GET.get('ubicacion')
+
+    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
+
+    if estado:
+        activos = activos.filter(estado=estado)
+    if categoria:
+        activos = activos.filter(categoria_id=categoria)
+    if ubicacion:
+        activos = activos.filter(ubicacion_id=ubicacion)
+
+    data = [{
+        'codigo': a.codigo,
+        'nombre': a.nombre,
+        'descripcion': a.descripcion,
+        'categoria': a.categoria.nombre if a.categoria else '',
+        'ubicacion': a.ubicacion.nombre if a.ubicacion else '',
+        'estado': a.estado
+    } for a in activos]
+
+    return JsonResponse({'data': data})

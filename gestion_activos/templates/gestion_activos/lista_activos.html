@@ -7,42 +7,41 @@
 <h2 class="mb-4">Lista de Activos</h2>
 
 <div class="card bg-dark text-white p-3 mb-3">
-  <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-2">
-    <select name="estado" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+    <input type="text" id="busqueda_filtro" placeholder="🔍 Buscar nombre o descripción"
+           class="form-control form-control-sm bg-light text-dark" style="width: 300px;">
+
+    <select id="estado_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
       <option value="">📁 Estado</option>
-      <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
-      <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
-      <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+      <option value="activo">Activo</option>
+      <option value="inactivo">Inactivo</option>
+      <option value="en_mantenimiento">Mantenimiento</option>
     </select>
 
-    <select name="categoria" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <select id="categoria_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
       <option value="">📂 Categoría</option>
       {% for cat in categorias %}
-        <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+        <option value="{{ cat.id }}">{{ cat.nombre }}</option>
       {% endfor %}
     </select>
 
-    <select name="ubicacion" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <select id="ubicacion_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
       <option value="">📍 Ubicación</option>
       {% for ub in ubicaciones %}
-        <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>{{ ub.nombre }}</option>
+        <option value="{{ ub.id }}">{{ ub.nombre }}</option>
       {% endfor %}
     </select>
 
-    <button type="submit" class="btn btn-primary btn-sm">
-      <i class="fas fa-filter"></i>
+    <button id="btn-filtrar" class="btn btn-primary btn-sm">
+      <i class="fas fa-filter"></i> Filtrar
     </button>
 
     <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto">
       <i class="fas fa-plus"></i>
     </a>
-    <button id="exportarPdf" class="btn btn-danger btn-sm">
-      <i class="fas fa-file-pdf"></i>
-    </button>
-    <button id="exportarExcel" class="btn btn-info btn-sm text-white">
-      <i class="fas fa-file-excel"></i>
-    </button>
-  </form>
+    <a id="export-pdf" class="btn btn-danger btn-sm"><i class="fas fa-file-pdf"></i></a>
+    <a id="export-xls" class="btn btn-info btn-sm text-white"><i class="fas fa-file-excel"></i></a>
+  </div>
 </div>
 
 <table id="tabla-activos" class="table table-striped table-bordered">
@@ -57,53 +56,76 @@
       <th>Acciones</th>
     </tr>
   </thead>
-  <tbody>
-    {% for activo in activos %}
-    <tr>
-      <td>{{ activo.codigo }}</td>
-      <td>{{ activo.nombre }}</td>
-      <td>{{ activo.descripcion }}</td>
-      <td>{{ activo.categoria.nombre }}</td>
-      <td>{{ activo.ubicacion.nombre }}</td>
-      <td>
-        <span class="badge bg-{{ activo.estado|lower|yesno:'success,danger,warning' }}">
-          {{ activo.get_estado_display }}
-        </span>
-      </td>
-      <td>
-        <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-warning btn-sm">✏️</a>
-        <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-danger btn-sm">🗑️</a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
 </table>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-   $(document).ready(function () {
-    $('#tabla-activos').DataTable({
-      language: {
-        lengthMenu: "Mostrar _MENU_ registros",
-        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-        paginate: {
-          previous: "Anterior",
-          next: "Siguiente"
+ $(document).ready(function () {
+    const tabla = $('#tabla-activos').DataTable({
+        ajax: {
+            url: '{% url "api_activos_filtrados" %}',
+            data: function (d) {
+                d.estado = $('#estado_filtro').val();
+                d.categoria = $('#categoria_filtro').val();
+                d.ubicacion = $('#ubicacion_filtro').val();
+                d.search = $('#busqueda_filtro').val();
+            }
         },
-        search: "🔍 Buscar:",
-        zeroRecords: "No se encontraron registros",
-      },
-      dom: 'lftrip'  // ⚠️ Activamos filtro DataTables y ocultamos su propio buscador redundante
+        columns: [
+            { data: 'codigo' },
+            { data: 'nombre' },
+            { data: 'descripcion' },
+            { data: 'categoria' },
+            { data: 'ubicacion' },
+            { data: 'estado',
+              render: function (data) {
+                let clase = 'bg-secondary';
+                if (data === 'activo') clase = 'bg-success';
+                else if (data === 'inactivo') clase = 'bg-danger';
+                else if (data === 'en_mantenimiento') clase = 'bg-warning';
+                return `<span class="badge ${clase} text-white">${data}</span>`;
+              }
+            },
+            {
+              data: null,
+              orderable: false,
+              render: function (data, type, row) {
+                return `
+                  <a href="/activos/editar/${row.id}/" class="btn btn-warning btn-sm">✏️</a>
+                  <a href="/activos/eliminar/${row.id}/" class="btn btn-danger btn-sm">🗑️</a>
+                `;
+              }
+            }
+        ],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        }
     });
 
-    $('#exportarPdf').click(function () {
-      window.location.href = "{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}";
+    $('#btn-filtrar').on('click', function () {
+        tabla.ajax.reload();
     });
 
-    $('#exportarExcel').click(function () {
-      window.location.href = "{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}";
+    $('#busqueda_filtro').on('keyup', function () {
+        tabla.ajax.reload();
     });
-  });
+
+    $('#export-pdf').on('click', function () {
+        const estado = $('#estado_filtro').val();
+        const categoria = $('#categoria_filtro').val();
+        const ubicacion = $('#ubicacion_filtro').val();
+        const url = `{% url 'reporte_pdf' %}?estado=${estado}&categoria=${categoria}&ubicacion=${ubicacion}`;
+        window.location.href = url;
+    });
+
+    $('#export-xls').on('click', function () {
+        const estado = $('#estado_filtro').val();
+        const categoria = $('#categoria_filtro').val();
+        const ubicacion = $('#ubicacion_filtro').val();
+        const url = `{% url 'exportar_excel' %}?estado=${estado}&categoria=${categoria}&ubicacion=${ubicacion}`;
+        window.location.href = url;
+    });
+});
 </script>
 {% endblock %}
