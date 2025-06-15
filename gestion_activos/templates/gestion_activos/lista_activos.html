@@ -56,12 +56,12 @@
     {% if estado_seleccionado %} Estado: <span class="badge bg-info text-dark">{{ estado_seleccionado }}</span> {% endif %}
     {% if categoria_seleccionada %}
       Categoría: <span class="badge bg-info text-dark">
-        {{ categorias|get_item_by_id:categoria_seleccionada }}
+        {{ categoria_nombre }}
       </span>
     {% endif %}
     {% if ubicacion_seleccionada %}
       Ubicación: <span class="badge bg-info text-dark">
-        {{ ubicaciones|get_item_by_id:ubicacion_seleccionada }}
+        {{ ubicacion_nombre }}
       </span>
     {% endif %}
   </div>

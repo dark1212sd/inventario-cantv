@@ -112,18 +112,14 @@ def logout_view(request):
 # --- CRUD Activos ---
 @login_required
 def lista_activos(request):
-    query = request.GET.get('busqueda', '')
-    activos = Activo.objects.select_related('categoria', 'ubicacion')
+    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
+    categorias = Categoria.objects.all()
+    ubicaciones = Ubicacion.objects.all()
 
-    if query:
-        activos = activos.filter(
-            nombre__icontains=query
-        )
-
-    # Otros filtros existentes
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
+
 
     if estado:
         activos = activos.filter(estado=estado)
@@ -132,9 +128,31 @@ def lista_activos(request):
     if ubicacion_id:
         activos = activos.filter(ubicacion_id=ubicacion_id)
 
-    categorias = Categoria.objects.all()
-    ubicaciones = Ubicacion.objects.all()
+
+    categoria_nombre = ''
+    ubicacion_nombre = ''
+
+    if categoria_id:
+        categoria = Categoria.objects.filter(id=categoria_id).first()
+        categoria_nombre = categoria.nombre if categoria else ''
+
+    if ubicacion_id:
+        ubicacion = Ubicacion.objects.filter(id=ubicacion_id).first()
+        ubicacion_nombre = ubicacion.nombre if ubicacion else ''
+
+    # Verificación de grupo para mostrar botones de acciones
     es_admin = request.user.groups.filter(name="Administrador").exists()
+
+    return render(request, 'gestion_activos/lista_activos.html', {
+        'activos': activos,
+        'categorias': categorias,
+        'ubicaciones': ubicaciones,
+        'estado_seleccionado': estado,
+        'categoria_seleccionada': categoria_id,
+        'ubicacion_seleccionada': ubicacion_id,
+        'categoria_nombre': categoria_nombre,
+        'ubicacion_nombre': ubicacion_nombre,
+        'es_admin': es_admin,
 
     return render(request, 'gestion_activos/lista_activos.html', {
         'activos': activos,
