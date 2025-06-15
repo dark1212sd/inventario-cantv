@@ -68,8 +68,54 @@
 {% endif %}
 
 <!-- Tabla -->
-<div class="table-responsive">
-  <table id="activos-table" class="table table-hover table-striped table-bordered">
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-center justify-content-between">
+
+  <!-- Filtros -->
+  <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+    <input type="text" name="buscar" value="{{ request.GET.buscar }}" class="form-control form-control-sm" placeholder="🔍 Buscar nombre o descripción">
+
+    <select name="estado" class="form-select form-select-sm">
+      <option value="">🗂 Estado</option>
+      <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
+      <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+      <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+    </select>
+
+    <select name="categoria" class="form-select form-select-sm">
+      <option value="">📁 Categoría</option>
+      {% for cat in categorias %}
+        <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="ubicacion" class="form-select form-select-sm">
+      <option value="">📍 Ubicación</option>
+      {% for ub in ubicaciones %}
+        <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>{{ ub.nombre }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-outline-primary btn-sm">
+      <i class="fas fa-filter"></i> Filtrar
+    </button>
+  </form>
+
+  <!-- Botones de acción rápida -->
+  <div class="d-flex gap-2">
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm">
+      <i class="fas fa-plus-circle"></i> Nuevo
+    </a>
+    <button id="exportarPdf" class="btn btn-danger btn-sm">
+      <i class="fas fa-file-pdf"></i>
+    </button>
+    <button id="exportarExcel" class="btn btn-primary btn-sm">
+      <i class="fas fa-file-excel"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Tabla de activos -->
+<table id="tabla-activos" class="table table-bordered table-hover">
   <thead class="table-dark">
     <tr>
       <th>Código</th>
@@ -79,22 +125,6 @@
       <th>Ubicación</th>
       <th>Estado</th>
       <th>Acciones</th>
-    </tr>
-    <tr class="filters bg-light">
-      <th><input type="text" class="form-control form-control-sm" placeholder="Código"></th>
-      <th><input type="text" class="form-control form-control-sm" placeholder="Nombre"></th>
-      <th><input type="text" class="form-control form-control-sm" placeholder="Descripción"></th>
-      <th><input type="text" class="form-control form-control-sm" placeholder="Categoría"></th>
-      <th><input type="text" class="form-control form-control-sm" placeholder="Ubicación"></th>
-      <th>
-        <select class="form-select form-select-sm">
-          <option value="">Todos</option>
-          <option value="activo">Activo</option>
-          <option value="inactivo">Inactivo</option>
-          <option value="en_mantenimiento">Mantenimiento</option>
-        </select>
-      </th>
-      <th></th>
     </tr>
   </thead>
   <tbody>
@@ -111,14 +141,13 @@
         </span>
       </td>
       <td>
-        <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-sm btn-warning">✏️</a>
-        <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-sm btn-danger">🗑️</a>
+        <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-warning btn-sm">✏️</a>
+        <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-danger btn-sm">🗑️</a>
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
-</div>
 
 <!-- Scripts DataTables -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -127,49 +156,27 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-  $(document).ready(function() {
-    let table = $('#activos-table').DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-        {
-          extend: 'pdfHtml5',
-          className: 'btn btn-danger btn-sm',
-          text: 'Exportar PDF'
-        },
-        {
-          extend: 'excelHtml5',
-          className: 'btn btn-primary btn-sm',
-          text: 'Exportar Excel'
-        },
-        {
-          text: 'Registrar Activo',
-          className: 'btn btn-success btn-sm',
-          action: function() {
-            window.location.href = "{% url 'registrar_activo' %}";
-          }
-        }
-      ],
-      initComplete: function() {
-        this.api().columns().every(function(index) {
-          let column = this;
-          $('input, select', $('.filters th')[index]).on('keyup change', function() {
-            if (column.search() !== this.value) {
-              column.search(this.value).draw();
-            }
-          });
-        });
-      },
+  $(document).ready(function () {
+    const tabla = $('#tabla-activos').DataTable({
       language: {
-        search: "Buscar global:",
+        search: "Buscar:",
         lengthMenu: "Mostrar _MENU_ registros",
-        zeroRecords: "No se encontraron registros",
         info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-        infoEmpty: "Mostrando 0 registros",
         paginate: {
           previous: "Anterior",
           next: "Siguiente"
-        }
+        },
+        zeroRecords: "No se encontraron registros"
       }
     });
+
+    $('#exportarPdf').on('click', function () {
+      window.location.href = "{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}";
+    });
+
+    $('#exportarExcel').on('click', function () {
+      window.location.href = "{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}";
+    });
   });
+</script>
 {% endblock %}
