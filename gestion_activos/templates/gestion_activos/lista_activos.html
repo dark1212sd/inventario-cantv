@@ -4,119 +4,59 @@
 {% block title %}Lista de Activos{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Lista de Activos</h1>
+<h2 class="mb-4">Lista de Activos</h2>
 
-<!-- Filtros superiores -->
-<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-  <div class="mb-2">
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success me-2">
-      <i class="bi bi-plus-circle"></i> Registrar Nuevo Activo
-    </a>
-    <a href="{% url 'reporte_pdf' %}" class="btn btn-danger me-2">
-      <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-    </a>
-    <a href="{% url 'exportar_excel' %}" class="btn btn-primary">
-      <i class="bi bi-file-earmark-excel"></i> Exportar Excel
-    </a>
-  </div>
-
-  <!-- Formulario de filtros -->
-  <form method="get" class="d-flex flex-wrap gap-2 mb-2">
-    <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Buscar por nombre o descripción...">
-    <select name="estado" class="form-select">
-      <option value="">Estado</option>
-      <option value="funcional" {% if estado_seleccionado == 'funcional' %}selected{% endif %}>Funcional</option>
-      <option value="mantenimiento" {% if estado_seleccionado == 'mantenimiento' %}selected{% endif %}>En mantenimiento</option>
-      <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
-    </select>
-    <select name="categoria" class="form-select">
-      <option value="">Categoría</option>
-      {% for categoria in categorias %}
-        <option value="{{ categoria.id }}" {% if categoria_seleccionada == categoria.id|stringformat:"s" %}selected{% endif %}>
-          {{ categoria.nombre }}
-        </option>
-      {% endfor %}
-    </select>
-    <select name="ubicacion" class="form-select">
-      <option value="">Ubicación</option>
-      {% for ubicacion in ubicaciones %}
-        <option value="{{ ubicacion.id }}" {% if ubicacion_seleccionada == ubicacion.id|stringformat:"s" %}selected{% endif %}>
-          {{ ubicacion.nombre }}
-        </option>
-      {% endfor %}
-    </select>
-    <button type="submit" class="btn btn-outline-primary">Filtrar</button>
-  </form>
-</div>
-
-<!-- Filtros activos -->
-{% if estado_seleccionado or categoria_seleccionada or ubicacion_seleccionada %}
-  <div class="alert alert-info">
-    <strong>Filtros aplicados:</strong>
-    {% if estado_seleccionado %} Estado: <span class="badge bg-info text-dark">{{ estado_seleccionado }}</span> {% endif %}
-    {% if categoria_seleccionada %}
-      Categoría: <span class="badge bg-info text-dark">
-        {{ categoria_nombre }}
-      </span>
-    {% endif %}
-    {% if ubicacion_seleccionada %}
-      Ubicación: <span class="badge bg-info text-dark">
-        {{ ubicacion_nombre }}
-      </span>
-    {% endif %}
-  </div>
-{% endif %}
-
-<!-- Tabla -->
-<div class="d-flex flex-wrap gap-2 mb-3 align-items-center justify-content-between">
-
-  <!-- Filtros -->
-  <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
-    <input type="text" name="buscar" value="{{ request.GET.buscar }}" class="form-control form-control-sm" placeholder="🔍 Buscar nombre o descripción">
-
-    <select name="estado" class="form-select form-select-sm">
-      <option value="">🗂 Estado</option>
-      <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
-      <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
-      <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
-    </select>
-
-    <select name="categoria" class="form-select form-select-sm">
-      <option value="">📁 Categoría</option>
-      {% for cat in categorias %}
-        <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
-      {% endfor %}
-    </select>
-
-    <select name="ubicacion" class="form-select form-select-sm">
-      <option value="">📍 Ubicación</option>
-      {% for ub in ubicaciones %}
-        <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>{{ ub.nombre }}</option>
-      {% endfor %}
-    </select>
-
-    <button type="submit" class="btn btn-outline-primary btn-sm">
-      <i class="fas fa-filter"></i> Filtrar
-    </button>
-  </form>
-
-  <!-- Botones de acción rápida -->
-  <div class="d-flex gap-2">
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm">
-      <i class="fas fa-plus-circle"></i> Nuevo
-    </a>
-    <button id="exportarPdf" class="btn btn-danger btn-sm">
-      <i class="fas fa-file-pdf"></i>
-    </button>
-    <button id="exportarExcel" class="btn btn-primary btn-sm">
-      <i class="fas fa-file-excel"></i>
-    </button>
-  </div>
-</div>
-
-<!-- Tabla de activos -->
 <table id="tabla-activos" class="table table-bordered table-hover">
   <thead class="table-dark">
+    <tr>
+      <th colspan="7">
+        <!-- Contenedor de acciones y filtros -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <!-- Filtros -->
+          <form method="get" class="d-flex flex-wrap gap-2 align-items-center mb-0">
+            <input type="text" name="buscar" value="{{ request.GET.buscar }}" class="form-control form-control-sm" placeholder="🔍 Buscar por nombre o descripción">
+
+            <select name="estado" class="form-select form-select-sm">
+              <option value="">🗂 Estado</option>
+              <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
+              <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+              <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+            </select>
+
+            <select name="categoria" class="form-select form-select-sm">
+              <option value="">📁 Categoría</option>
+              {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+              {% endfor %}
+            </select>
+
+            <select name="ubicacion" class="form-select form-select-sm">
+              <option value="">📍 Ubicación</option>
+              {% for ub in ubicaciones %}
+                <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>{{ ub.nombre }}</option>
+              {% endfor %}
+            </select>
+
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-filter"></i> Filtrar
+            </button>
+          </form>
+
+          <!-- Botones acción -->
+          <div class="d-flex gap-2 align-items-center">
+            <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm">
+              <i class="fas fa-plus-circle"></i>
+            </a>
+            <button id="exportarPdf" class="btn btn-danger btn-sm">
+              <i class="fas fa-file-pdf"></i>
+            </button>
+            <button id="exportarExcel" class="btn btn-primary btn-sm">
+              <i class="fas fa-file-excel"></i>
+            </button>
+          </div>
+        </div>
+      </th>
+    </tr>
     <tr>
       <th>Código</th>
       <th>Nombre</th>
@@ -127,6 +67,7 @@
       <th>Acciones</th>
     </tr>
   </thead>
+
   <tbody>
     {% for activo in activos %}
     <tr>
@@ -148,18 +89,14 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
 
-<!-- Scripts DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-
+{% block extra_js %}
 <script>
   $(document).ready(function () {
-    const tabla = $('#tabla-activos').DataTable({
+    $('#tabla-activos').DataTable({
       language: {
-        search: "Buscar:",
+        search: "",
         lengthMenu: "Mostrar _MENU_ registros",
         info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
         paginate: {
@@ -167,15 +104,16 @@
           next: "Siguiente"
         },
         zeroRecords: "No se encontraron registros"
-      }
+      },
+      dom: 'lrtip'  // 👈 Elimina el input de búsqueda de DataTables
     });
 
-    $('#exportarPdf').on('click', function () {
-      window.location.href = "{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}";
+    $('#exportarPdf').click(function () {
+      window.location.href = "{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}&buscar={{ request.GET.buscar }}";
     });
 
-    $('#exportarExcel').on('click', function () {
-      window.location.href = "{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}";
+    $('#exportarExcel').click(function () {
+      window.location.href = "{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}&buscar={{ request.GET.buscar }}";
     });
   });
 </script>
