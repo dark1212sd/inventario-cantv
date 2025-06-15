@@ -395,7 +395,9 @@ def api_activos_filtrados(request):
     estado = request.GET.get('estado')
     categoria = request.GET.get('categoria')
     ubicacion = request.GET.get('ubicacion')
+    search = request.GET.get('search', '')
 
+    # Filtramos los activos
     activos = Activo.objects.select_related('categoria', 'ubicacion').all()
 
     if estado:
@@ -404,14 +406,23 @@ def api_activos_filtrados(request):
         activos = activos.filter(categoria_id=categoria)
     if ubicacion:
         activos = activos.filter(ubicacion_id=ubicacion)
+    if search:
+        activos = activos.filter(
+            Q(nombre__icontains=search) |
+            Q(descripcion__icontains=search) |
+            Q(codigo__icontains=search)
+        )
 
-    data = [{
-        'codigo': a.codigo,
-        'nombre': a.nombre,
-        'descripcion': a.descripcion,
-        'categoria': a.categoria.nombre if a.categoria else '',
-        'ubicacion': a.ubicacion.nombre if a.ubicacion else '',
-        'estado': a.estado
-    } for a in activos]
+    data = []
+    for activo in activos:
+        data.append({
+            'id': activo.id,
+            'codigo': activo.codigo,
+            'nombre': activo.nombre,
+            'descripcion': activo.descripcion,
+            'categoria': activo.categoria.nombre if activo.categoria else '',
+            'ubicacion': activo.ubicacion.nombre if activo.ubicacion else '',
+            'estado': activo.get_estado_display().lower(),
+        })
 
     return JsonResponse({'data': data})

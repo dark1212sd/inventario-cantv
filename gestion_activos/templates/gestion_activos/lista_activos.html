@@ -6,42 +6,53 @@
 {% block content %}
 <h2 class="mb-4">Lista de Activos</h2>
 
-<div class="card bg-dark text-white p-3 mb-3">
-  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-    <input type="text" id="busqueda_filtro" placeholder="🔍 Buscar nombre o descripción"
-           class="form-control form-control-sm bg-light text-dark" style="width: 300px;">
+<h2 class="mb-4">Lista de Activos</h2>
 
-    <select id="estado_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
+<div class="card bg-dark text-white p-3 mb-3">
+  <form id="filtros-form" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+    <!-- Busqueda general -->
+    <input id="search_filtro" type="text" class="form-control form-control-sm" placeholder="🔍 Buscar nombre o descripción" style="width: 240px;">
+
+    <!-- Estado -->
+    <select id="estado_filtro" class="form-select form-select-sm" style="width: 150px;">
       <option value="">📁 Estado</option>
       <option value="activo">Activo</option>
       <option value="inactivo">Inactivo</option>
       <option value="en_mantenimiento">Mantenimiento</option>
     </select>
 
-    <select id="categoria_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <!-- Categoría -->
+    <select id="categoria_filtro" class="form-select form-select-sm" style="width: 180px;">
       <option value="">📂 Categoría</option>
       {% for cat in categorias %}
         <option value="{{ cat.id }}">{{ cat.nombre }}</option>
       {% endfor %}
     </select>
 
-    <select id="ubicacion_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <!-- Ubicación -->
+    <select id="ubicacion_filtro" class="form-select form-select-sm" style="width: 180px;">
       <option value="">📍 Ubicación</option>
       {% for ub in ubicaciones %}
         <option value="{{ ub.id }}">{{ ub.nombre }}</option>
       {% endfor %}
     </select>
 
-    <button id="btn-filtrar" class="btn btn-primary btn-sm">
+    <!-- Botón filtrar -->
+    <button id="btn-filtrar" type="button" class="btn btn-primary btn-sm">
       <i class="fas fa-filter"></i> Filtrar
     </button>
 
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto">
+    <!-- Botones de acción -->
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto" title="Nuevo Activo">
       <i class="fas fa-plus"></i>
     </a>
-    <a id="export-pdf" class="btn btn-danger btn-sm"><i class="fas fa-file-pdf"></i></a>
-    <a id="export-xls" class="btn btn-info btn-sm text-white"><i class="fas fa-file-excel"></i></a>
-  </div>
+    <a id="export-pdf" class="btn btn-danger btn-sm" href="{% url 'reporte_pdf' %}" title="Exportar PDF">
+      <i class="fas fa-file-pdf"></i>
+    </a>
+    <a id="export-xls" class="btn btn-info btn-sm text-white" href="{% url 'exportar_excel' %}" title="Exportar Excel">
+      <i class="fas fa-file-excel"></i>
+    </a>
+  </form>
 </div>
 
 <table id="tabla-activos" class="table table-striped table-bordered">
@@ -56,12 +67,13 @@
       <th>Acciones</th>
     </tr>
   </thead>
+  <tbody></tbody>
 </table>
 {% endblock %}
 
 {% block extra_js %}
 <script>
- $(document).ready(function () {
+$(document).ready(function () {
     const tabla = $('#tabla-activos').DataTable({
         ajax: {
             url: '{% url "api_activos_filtrados" %}',
@@ -69,7 +81,7 @@
                 d.estado = $('#estado_filtro').val();
                 d.categoria = $('#categoria_filtro').val();
                 d.ubicacion = $('#ubicacion_filtro').val();
-                d.search = $('#busqueda_filtro').val();
+                d.search = $('#search_filtro').val();
             }
         },
         columns: [
@@ -78,24 +90,15 @@
             { data: 'descripcion' },
             { data: 'categoria' },
             { data: 'ubicacion' },
-            { data: 'estado',
-              render: function (data) {
-                let clase = 'bg-secondary';
-                if (data === 'activo') clase = 'bg-success';
-                else if (data === 'inactivo') clase = 'bg-danger';
-                else if (data === 'en_mantenimiento') clase = 'bg-warning';
-                return `<span class="badge ${clase} text-white">${data}</span>`;
-              }
-            },
+            { data: 'estado' },
             {
-              data: null,
-              orderable: false,
-              render: function (data, type, row) {
-                return `
-                  <a href="/activos/editar/${row.id}/" class="btn btn-warning btn-sm">✏️</a>
-                  <a href="/activos/eliminar/${row.id}/" class="btn btn-danger btn-sm">🗑️</a>
-                `;
-              }
+                data: 'id',
+                render: function (data, type, row) {
+                    return `
+                        <a href="/activos/editar/${data}/" class="btn btn-warning btn-sm">✏️</a>
+                        <a href="/activos/eliminar/${data}/" class="btn btn-danger btn-sm">🗑️</a>
+                    `;
+                }
             }
         ],
         language: {
@@ -103,28 +106,9 @@
         }
     });
 
-    $('#btn-filtrar').on('click', function () {
+    // Recargar al usar filtros
+    $('#estado_filtro, #categoria_filtro, #ubicacion_filtro, #search_filtro').on('change keyup', function () {
         tabla.ajax.reload();
-    });
-
-    $('#busqueda_filtro').on('keyup', function () {
-        tabla.ajax.reload();
-    });
-
-    $('#export-pdf').on('click', function () {
-        const estado = $('#estado_filtro').val();
-        const categoria = $('#categoria_filtro').val();
-        const ubicacion = $('#ubicacion_filtro').val();
-        const url = `{% url 'reporte_pdf' %}?estado=${estado}&categoria=${categoria}&ubicacion=${ubicacion}`;
-        window.location.href = url;
-    });
-
-    $('#export-xls').on('click', function () {
-        const estado = $('#estado_filtro').val();
-        const categoria = $('#categoria_filtro').val();
-        const ubicacion = $('#ubicacion_filtro').val();
-        const url = `{% url 'exportar_excel' %}?estado=${estado}&categoria=${categoria}&ubicacion=${ubicacion}`;
-        window.location.href = url;
     });
 });
 </script>
