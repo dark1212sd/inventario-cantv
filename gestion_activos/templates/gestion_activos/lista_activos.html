@@ -3,6 +3,7 @@
 
 {% block title %}Lista de Activos{% endblock %}
 
+{% block content %}
 <h2 class="mb-4">Lista de Activos</h2>
 
 <div class="card bg-dark text-white p-3 mb-3">
@@ -81,7 +82,7 @@
 
 {% block extra_js %}
 <script>
-  $(document).ready(function () {
+   $(document).ready(function () {
     $('#tabla-activos').DataTable({
       language: {
         lengthMenu: "Mostrar _MENU_ registros",
