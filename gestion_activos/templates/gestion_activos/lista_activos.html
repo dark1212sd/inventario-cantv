@@ -8,45 +8,77 @@
 
 <!-- Filtros y acciones -->
 <div class="card bg-dark text-white p-3 mb-3">
-  <div class="d-flex flex-wrap align-items-center gap-2">
+  <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-2">
 
-    <!-- Filtros -->
-    <select id="estado_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
+    <!-- Buscar -->
+    <input
+      type="text"
+      id="buscar_filtro"
+      class="form-control form-control-sm bg-light text-dark"
+      placeholder="🔍 Buscar nombre o descripción"
+      style="width: 300px;"
+    >
+
+    <!-- Estado -->
+    <select
+      name="estado"
+      id="estado_filtro"
+      class="form-select form-select-sm bg-light text-dark"
+      style="width: 150px;"
+    >
       <option value="">📁 Estado</option>
       <option value="activo">Activo</option>
       <option value="inactivo">Inactivo</option>
       <option value="en_mantenimiento">Mantenimiento</option>
     </select>
 
-    <select id="categoria_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <!-- Categoría -->
+    <select
+      name="categoria"
+      id="categoria_filtro"
+      class="form-select form-select-sm bg-light text-dark"
+      style="width: 180px;"
+    >
       <option value="">📂 Categoría</option>
       {% for cat in categorias %}
         <option value="{{ cat.id }}">{{ cat.nombre }}</option>
       {% endfor %}
     </select>
 
-    <select id="ubicacion_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <!-- Ubicación -->
+    <select
+      name="ubicacion"
+      id="ubicacion_filtro"
+      class="form-select form-select-sm bg-light text-dark"
+      style="width: 180px;"
+    >
       <option value="">📍 Ubicación</option>
       {% for ub in ubicaciones %}
         <option value="{{ ub.id }}">{{ ub.nombre }}</option>
       {% endfor %}
     </select>
 
-    <button id="btn-filtrar" class="btn btn-primary btn-sm">
-      <i class="fas fa-filter"></i>
+    <!-- Botón Filtrar -->
+    <button type="button" id="btn-filtrar" class="btn btn-primary btn-sm">
+      <i class="fas fa-filter"></i> Filtrar
     </button>
 
-    <!-- Acciones -->
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto">
+    <!-- Botón Nuevo -->
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm">
       <i class="fas fa-plus"></i>
     </a>
-    <a id="export-pdf" class="btn btn-danger btn-sm" href="#">
+
+    <!-- Exportar PDF -->
+    <a id="export-pdf" class="btn btn-danger btn-sm" href="{% url 'reporte_pdf' %}?estado=&categoria=&ubicacion=">
       <i class="fas fa-file-pdf"></i>
     </a>
-    <a id="export-xls" class="btn btn-info btn-sm text-white" href="#">
+
+    <!-- Exportar Excel -->
+    <a id="export-xls" class="btn btn-info btn-sm text-white" href="{% url 'exportar_excel' %}?estado=&categoria=&ubicacion=">
       <i class="fas fa-file-excel"></i>
     </a>
-  </div>
+
+  </form>
 </div>
 
 <!-- Tabla -->
@@ -68,71 +100,40 @@
 {% block extra_js %}
 <script>
  $(document).ready(function () {
-    const tabla = $('#tabla-activos').DataTable({
-      ajax: {
-        url: "{% url 'api_activos_filtrados' %}",
-        data: function (d) {
-          d.estado = $('#estado_filtro').val();
-          d.categoria = $('#categoria_filtro').val();
-          d.ubicacion = $('#ubicacion_filtro').val();
-        }
+  const tabla = $('#tabla-activos').DataTable({
+    processing: true,
+    serverSide: false,
+    ajax: {
+      url: '{% url "api_activos_filtrados" %}',
+      dataSrc: 'data',
+      data: function (d) {
+        d.estado = $('#estado_filtro').val();
+        d.categoria = $('#categoria_filtro').val();
+        d.ubicacion = $('#ubicacion_filtro').val();
+        d.search = $('#buscar_filtro').val();
       },
-      columns: [
-        { data: 'codigo' },
-        { data: 'nombre' },
-        { data: 'descripcion' },
-        { data: 'categoria' },
-        { data: 'ubicacion' },
-        {
-          data: 'estado',
-          render: function (data) {
-            let clase = 'secondary';
-            if (data.includes('activo')) clase = 'success';
-            else if (data.includes('inactivo')) clase = 'danger';
-            else if (data.includes('mantenimiento')) clase = 'warning';
-            return `<span class="badge bg-${clase}">${data}</span>`;
-          }
-        },
-        {
-          data: 'id',
-          render: function (id) {
-            return `
-              <a href="/activos/editar/${id}/" class="btn btn-warning btn-sm">✏️</a>
-              <a href="/activos/eliminar/${id}/" class="btn btn-danger btn-sm">🗑️</a>
-            `;
-          }
-        }
-      ],
-      language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+      error: function (xhr, status, error) {
+        console.error('Error al cargar datos:', error);
+        console.log(xhr.responseText);
       }
-    });
-
-    $('#btn-filtrar').on('click', function () {
-      tabla.ajax.reload();
-    });
-
-    // Exportar con filtros
-    function buildQueryParams() {
-      const estado = $('#estado_filtro').val();
-      const categoria = $('#categoria_filtro').val();
-      const ubicacion = $('#ubicacion_filtro').val();
-      let query = '?';
-      if (estado) query += `estado=${estado}&`;
-      if (categoria) query += `categoria=${categoria}&`;
-      if (ubicacion) query += `ubicacion=${ubicacion}&`;
-      return query;
+    },
+    columns: [
+      { data: 'codigo' },
+      { data: 'nombre' },
+      { data: 'descripcion' },
+      { data: 'categoria' },
+      { data: 'ubicacion' },
+      { data: 'estado' }
+    ],
+    language: {
+      url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
     }
-
-    $('#export-pdf').on('click', function (e) {
-      e.preventDefault();
-      window.location.href = "{% url 'reporte_pdf' %}" + buildQueryParams();
-    });
-
-    $('#export-xls').on('click', function (e) {
-      e.preventDefault();
-      window.location.href = "{% url 'exportar_excel' %}" + buildQueryParams();
-    });
   });
+
+  // Botón para filtrar
+  $('#btn-filtrar').on('click', function () {
+    tabla.ajax.reload();
+  });
+});
 </script>
 {% endblock %}
