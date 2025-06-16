@@ -1,7 +1,5 @@
 from io import BytesIO
 import openpyxl
-from django.http import JsonResponse
-from django.core import serializers
 from django.db.models import Q
 from .forms import UsuarioForm
 from django.shortcuts import render, redirect, get_object_or_404
@@ -119,7 +117,6 @@ def lista_activos(request):
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
 
-    # Filtro dinámico
     if estado:
         activos = activos.filter(estado=estado)
     if categoria_id:
@@ -127,18 +124,14 @@ def lista_activos(request):
     if ubicacion_id:
         activos = activos.filter(ubicacion_id=ubicacion_id)
 
-    # Obtener nombres para mostrar en los filtros aplicados
-    categoria_nombre = ''
-    ubicacion_nombre = ''
-
-    if categoria_id:
-        categoria = Categoria.objects.filter(id=categoria_id).first()
-        categoria_nombre = categoria.nombre if categoria else ''
-
-    if ubicacion_id:
-        ubicacion = Ubicacion.objects.filter(id=ubicacion_id).first()
-        ubicacion_nombre = ubicacion.nombre if ubicacion else ''
-
+    return render(request, 'gestion_activos/lista_activos.html', {
+        'activos': activos,
+        'categorias': categorias,
+        'ubicaciones': ubicaciones,
+        'estado_seleccionado': estado,
+        'categoria_seleccionada': categoria_id,
+        'ubicacion_seleccionada': ubicacion_id
+    })
     # Verificación de grupo para mostrar botones de acciones
     es_admin = request.user.groups.filter(name="Administrador").exists()
 
@@ -374,51 +367,3 @@ def exportar_excel(request):
     response['Content-Disposition'] = 'attachment; filename="activos_filtrados.xlsx"'
     wb.save(response)
     return response
-
-@login_required
-def filtrar_activos(request):
-    qs = Activo.objects.select_related('categoria','ubicacion').all()
-    for param, field in (('estado','estado'),
-                         ('categoria','categoria_id'),
-                         ('ubicacion','ubicacion_id')):
-        v = request.GET.get(param)
-        if v and v.isdigit() or param=='estado':
-            qs = qs.filter(**{field: v})
-    return qs
-
-
-@login_required
-def api_activos_filtrados(request):
-    estado = request.GET.get('estado')
-    categoria = request.GET.get('categoria')
-    ubicacion = request.GET.get('ubicacion')
-    search = request.GET.get('search', '')
-
-    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
-
-    if estado:
-        activos = activos.filter(estado=estado)
-    if categoria:
-        activos = activos.filter(categoria_id=categoria)
-    if ubicacion:
-        activos = activos.filter(ubicacion_id=ubicacion)
-    if search:
-        activos = activos.filter(
-            Q(nombre__icontains=search) |
-            Q(descripcion__icontains=search) |
-            Q(codigo__icontains=search)
-        )
-
-    data = []
-    for activo in activos:
-        data.append({
-            'id': activo.id,
-            'codigo': activo.codigo,
-            'nombre': activo.nombre,
-            'descripcion': activo.descripcion,
-            'categoria': activo.categoria.nombre if activo.categoria else '',
-            'ubicacion': activo.ubicacion.nombre if activo.ubicacion else '',
-            'estado': activo.get_estado_display(),  # 👈 CORREGIDO: no usar .lower()
-        })
-
-    return JsonResponse({'data': data})

@@ -7,47 +7,47 @@
 <h2 class="mb-4">Lista de Activos</h2>
 
 <div class="card bg-dark text-white p-3 mb-3">
-  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-    <input type="text" id="busqueda" placeholder="🔍 Buscar nombre o descripción" class="form-control form-control-sm bg-light text-dark" style="width: 250px;">
+  <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+    <input type="text" name="busqueda" placeholder="🔍 Buscar nombre o descripción" class="form-control form-control-sm bg-light text-dark" style="width: 250px;" value="{{ request.GET.busqueda }}">
 
-    <select id="estado_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
+    <select name="estado" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
       <option value="">📁 Estado</option>
-      <option value="activo">Activo</option>
-      <option value="inactivo">Inactivo</option>
-      <option value="en_mantenimiento">Mantenimiento</option>
+      <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
+      <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+      <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
     </select>
 
-    <select id="categoria_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <select name="categoria" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
       <option value="">📂 Categoría</option>
       {% for cat in categorias %}
-        <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+        <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
       {% endfor %}
     </select>
 
-    <select id="ubicacion_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
+    <select name="ubicacion" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
       <option value="">📍 Ubicación</option>
       {% for ub in ubicaciones %}
-        <option value="{{ ub.id }}">{{ ub.nombre }}</option>
+        <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>{{ ub.nombre }}</option>
       {% endfor %}
     </select>
 
-    <button id="btn-filtrar" class="btn btn-primary btn-sm">
+    <button type="submit" class="btn btn-primary btn-sm">
       <i class="fas fa-filter"></i> Filtrar
     </button>
 
     <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto">
       <i class="fas fa-plus"></i>
     </a>
-    <button id="exportarPdf" class="btn btn-danger btn-sm">
+    <a href="{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-danger btn-sm">
       <i class="fas fa-file-pdf"></i>
-    </button>
-    <button id="exportarExcel" class="btn btn-info btn-sm text-white">
+    </a>
+    <a href="{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}" class="btn btn-info btn-sm text-white">
       <i class="fas fa-file-excel"></i>
-    </button>
-  </div>
+    </a>
+  </form>
 </div>
 
-<table id="tabla-activos" class="table table-striped table-bordered w-100">
+<table id="tabla-activos" class="table table-striped table-bordered">
   <thead class="table-dark">
     <tr>
       <th>Código</th>
@@ -59,81 +59,46 @@
       <th>Acciones</th>
     </tr>
   </thead>
+  <tbody>
+    {% for activo in activos %}
+      <tr>
+        <td>{{ activo.codigo }}</td>
+        <td>{{ activo.nombre }}</td>
+        <td>{{ activo.descripcion }}</td>
+        <td>{{ activo.categoria.nombre }}</td>
+        <td>{{ activo.ubicacion.nombre }}</td>
+        <td>
+          {% if activo.estado == 'activo' %}
+            <span class="badge bg-success">Activo</span>
+          {% elif activo.estado == 'inactivo' %}
+            <span class="badge bg-danger">Inactivo</span>
+          {% else %}
+            <span class="badge bg-warning text-dark">Mantenimiento</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-warning btn-sm">✏️</a>
+          <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="7" class="text-center">No hay activos registrados.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-$(document).ready(function () {
-  const tabla = $('#tabla-activos').DataTable({
-    processing: true,
-    serverSide: false,
-    ajax: {
-      url: "{% url 'api_activos_filtrados' %}",
-      dataSrc: 'data',
-      data: function (d) {
-        d.estado = $('#estado_filtro').val();
-        d.categoria = $('#categoria_filtro').val();
-        d.ubicacion = $('#ubicacion_filtro').val();
-        d.search = $('#busqueda').val();
-      }
-    },
-    columns: [
-      { data: 'codigo' },
-      { data: 'nombre' },
-      { data: 'descripcion' },
-      { data: 'categoria' },
-      { data: 'ubicacion' },
-      {
-        data: 'estado',
-        render: function (data) {
-          let badgeClass = 'secondary';
-          if (data.toLowerCase() === 'activo') badgeClass = 'success';
-          else if (data.toLowerCase() === 'inactivo') badgeClass = 'danger';
-          else if (data.toLowerCase().includes('mantenimiento')) badgeClass = 'warning';
-          return `<span class="badge bg-${badgeClass}">${data}</span>`;
-        }
+  $(document).ready(function () {
+    $('#tabla-activos').DataTable({
+      language: {
+        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
       },
-      {
-        data: 'id',
-        render: function (id) {
-          return `
-            <a href="/activos/editar/${id}/" class="btn btn-warning btn-sm">✏️</a>
-            <a href="/activos/eliminar/${id}/" class="btn btn-danger btn-sm">🗑️</a>
-          `;
-        },
-        orderable: false,
-        searchable: false
-      }
-    ],
-    language: {
-      url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-    }
+      pageLength: 10,
+    });
   });
-
-  $('#btn-filtrar, #estado_filtro, #categoria_filtro, #ubicacion_filtro').on('change click', function () {
-    tabla.ajax.reload();
-  });
-
-  $('#busqueda').on('keyup', function () {
-    tabla.ajax.reload();
-  });
-
-  $('#exportarPdf').click(function () {
-    const estado = $('#estado_filtro').val();
-    const categoria = $('#categoria_filtro').val();
-    const ubicacion = $('#ubicacion_filtro').val();
-    const params = new URLSearchParams({ estado, categoria, ubicacion });
-    window.location.href = `{% url 'reporte_pdf' %}?${params}`;
-  });
-
-  $('#exportarExcel').click(function () {
-    const estado = $('#estado_filtro').val();
-    const categoria = $('#categoria_filtro').val();
-    const ubicacion = $('#ubicacion_filtro').val();
-    const params = new URLSearchParams({ estado, categoria, ubicacion });
-    window.location.href = `{% url 'exportar_excel' %}?${params}`;
-  });
-});
 </script>
 {% endblock %}
