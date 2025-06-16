@@ -6,57 +6,52 @@
 {% block content %}
 <h2 class="mb-4">Lista de Activos</h2>
 
-<h2 class="mb-4">Lista de Activos</h2>
-
+<!-- Filtros y acciones -->
 <div class="card bg-dark text-white p-3 mb-3">
-  <form id="filtros-form" class="d-flex flex-wrap align-items-center gap-2 mb-2">
-    <!-- Busqueda general -->
-    <input id="search_filtro" type="text" class="form-control form-control-sm" placeholder="🔍 Buscar nombre o descripción" style="width: 240px;">
+  <div class="d-flex flex-wrap align-items-center gap-2">
 
-    <!-- Estado -->
-    <select id="estado_filtro" class="form-select form-select-sm" style="width: 150px;">
+    <!-- Filtros -->
+    <select id="estado_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 150px;">
       <option value="">📁 Estado</option>
       <option value="activo">Activo</option>
       <option value="inactivo">Inactivo</option>
       <option value="en_mantenimiento">Mantenimiento</option>
     </select>
 
-    <!-- Categoría -->
-    <select id="categoria_filtro" class="form-select form-select-sm" style="width: 180px;">
+    <select id="categoria_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
       <option value="">📂 Categoría</option>
       {% for cat in categorias %}
         <option value="{{ cat.id }}">{{ cat.nombre }}</option>
       {% endfor %}
     </select>
 
-    <!-- Ubicación -->
-    <select id="ubicacion_filtro" class="form-select form-select-sm" style="width: 180px;">
+    <select id="ubicacion_filtro" class="form-select form-select-sm bg-light text-dark" style="width: 180px;">
       <option value="">📍 Ubicación</option>
       {% for ub in ubicaciones %}
         <option value="{{ ub.id }}">{{ ub.nombre }}</option>
       {% endfor %}
     </select>
 
-    <!-- Botón filtrar -->
-    <button id="btn-filtrar" type="button" class="btn btn-primary btn-sm">
-      <i class="fas fa-filter"></i> Filtrar
+    <button id="btn-filtrar" class="btn btn-primary btn-sm">
+      <i class="fas fa-filter"></i>
     </button>
 
-    <!-- Botones de acción -->
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto" title="Nuevo Activo">
+    <!-- Acciones -->
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm ms-auto">
       <i class="fas fa-plus"></i>
     </a>
-    <a id="export-pdf" class="btn btn-danger btn-sm" href="{% url 'reporte_pdf' %}" title="Exportar PDF">
+    <a id="export-pdf" class="btn btn-danger btn-sm" href="#">
       <i class="fas fa-file-pdf"></i>
     </a>
-    <a id="export-xls" class="btn btn-info btn-sm text-white" href="{% url 'exportar_excel' %}" title="Exportar Excel">
+    <a id="export-xls" class="btn btn-info btn-sm text-white" href="#">
       <i class="fas fa-file-excel"></i>
     </a>
-  </form>
+  </div>
 </div>
 
-<table id="tabla-activos" class="table table-striped table-bordered">
-  <thead class="table-dark">
+<!-- Tabla -->
+<table id="tabla-activos" class="table table-bordered table-hover table-dark">
+  <thead>
     <tr>
       <th>Código</th>
       <th>Nombre</th>
@@ -67,49 +62,77 @@
       <th>Acciones</th>
     </tr>
   </thead>
-  <tbody></tbody>
 </table>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-$(document).ready(function () {
+ $(document).ready(function () {
     const tabla = $('#tabla-activos').DataTable({
-        ajax: {
-            url: '{% url "api_activos_filtrados" %}',
-            data: function (d) {
-                d.estado = $('#estado_filtro').val();
-                d.categoria = $('#categoria_filtro').val();
-                d.ubicacion = $('#ubicacion_filtro').val();
-                d.search = $('#search_filtro').val();
-            }
-        },
-        columns: [
-            { data: 'codigo' },
-            { data: 'nombre' },
-            { data: 'descripcion' },
-            { data: 'categoria' },
-            { data: 'ubicacion' },
-            { data: 'estado' },
-            {
-                data: 'id',
-                render: function (data, type, row) {
-                    return `
-                        <a href="/activos/editar/${data}/" class="btn btn-warning btn-sm">✏️</a>
-                        <a href="/activos/eliminar/${data}/" class="btn btn-danger btn-sm">🗑️</a>
-                    `;
-                }
-            }
-        ],
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+      ajax: {
+        url: "{% url 'api_activos_filtrados' %}",
+        data: function (d) {
+          d.estado = $('#estado_filtro').val();
+          d.categoria = $('#categoria_filtro').val();
+          d.ubicacion = $('#ubicacion_filtro').val();
         }
+      },
+      columns: [
+        { data: 'codigo' },
+        { data: 'nombre' },
+        { data: 'descripcion' },
+        { data: 'categoria' },
+        { data: 'ubicacion' },
+        {
+          data: 'estado',
+          render: function (data) {
+            let clase = 'secondary';
+            if (data.includes('activo')) clase = 'success';
+            else if (data.includes('inactivo')) clase = 'danger';
+            else if (data.includes('mantenimiento')) clase = 'warning';
+            return `<span class="badge bg-${clase}">${data}</span>`;
+          }
+        },
+        {
+          data: 'id',
+          render: function (id) {
+            return `
+              <a href="/activos/editar/${id}/" class="btn btn-warning btn-sm">✏️</a>
+              <a href="/activos/eliminar/${id}/" class="btn btn-danger btn-sm">🗑️</a>
+            `;
+          }
+        }
+      ],
+      language: {
+        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+      }
     });
 
-    // Recargar al usar filtros
-    $('#estado_filtro, #categoria_filtro, #ubicacion_filtro, #search_filtro').on('change keyup', function () {
-        tabla.ajax.reload();
+    $('#btn-filtrar').on('click', function () {
+      tabla.ajax.reload();
     });
-});
+
+    // Exportar con filtros
+    function buildQueryParams() {
+      const estado = $('#estado_filtro').val();
+      const categoria = $('#categoria_filtro').val();
+      const ubicacion = $('#ubicacion_filtro').val();
+      let query = '?';
+      if (estado) query += `estado=${estado}&`;
+      if (categoria) query += `categoria=${categoria}&`;
+      if (ubicacion) query += `ubicacion=${ubicacion}&`;
+      return query;
+    }
+
+    $('#export-pdf').on('click', function (e) {
+      e.preventDefault();
+      window.location.href = "{% url 'reporte_pdf' %}" + buildQueryParams();
+    });
+
+    $('#export-xls').on('click', function (e) {
+      e.preventDefault();
+      window.location.href = "{% url 'exportar_excel' %}" + buildQueryParams();
+    });
+  });
 </script>
 {% endblock %}

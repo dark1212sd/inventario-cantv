@@ -38,5 +38,5 @@ urlpatterns = [
     path('reporte/pdf/', views.reporte_pdf, name='reporte_pdf'),
     path('reporte/excel/', views.exportar_excel, name='exportar_excel'),
 
-    path('api/activos/', views.api_activos_filtrados, name='api_activos_filtrados'),
+    path('api/activos/filtrados/', views.api_activos_filtrados, name='api_activos_filtrados'),
 ]
