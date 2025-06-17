@@ -18,6 +18,8 @@ from gestion_activos.forms import (
     ActivoForm, CategoriaForm, UbicacionForm, UsuarioForm
 )
 from gestion_activos.models import Categoria, Ubicacion, Activo
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 def es_admin_sistema(user):
@@ -367,3 +369,20 @@ def exportar_excel(request):
     response['Content-Disposition'] = 'attachment; filename="activos_filtrados.xlsx"'
     wb.save(response)
     return response
+
+
+def contacto(request):
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        mensaje = request.POST.get('mensaje')
+
+        send_mail(
+            subject=f'Nuevo mensaje de {nombre}',
+            message=mensaje,
+            from_email=settings.DEFAULT_FROM_EMAIL,  # tomado desde settings
+            recipient_list=['destinatario@dominio.com'],
+            fail_silently=False
+        )
+
+        return HttpResponse("Correo enviado correctamente")
+    return render(request, 'formulario_contacto.html')
