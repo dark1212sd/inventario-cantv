@@ -3,9 +3,16 @@ from .models import Activo, Categoria, Ubicacion
 from django.contrib.auth.models import User, Group
 
 class ActivoForm(forms.ModelForm):
+    responsable = forms.ModelChoiceField(
+        queryset=User.objects.all(),
+        required=False,
+        label="Responsable (Usuario)",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = Activo
-        exclude = ['fecha_registro']  # No se muestra en el formulario
+        exclude = ['fecha_registro']
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 3}),
         }
@@ -19,12 +26,6 @@ class UbicacionForm(forms.ModelForm):
     class Meta:
         model  = Ubicacion
         fields = ['nombre', 'descripcion']
-
-from django import forms
-from django.contrib.auth.models import User, Group
-
-from django import forms
-from django.contrib.auth.models import User, Group
 
 class UsuarioForm(forms.ModelForm):
     grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")

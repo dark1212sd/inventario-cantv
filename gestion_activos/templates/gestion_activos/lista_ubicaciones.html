@@ -1,18 +1,9 @@
 {% extends 'gestion_activos/base.html' %}
-
-{% block title %}Ubicaciones{% endblock %}
+{% block title %}Lista de Ubicaciones{% endblock %}
 
 {% block content %}
 <h2>Ubicaciones</h2>
-
-<form method="get" class="mb-3 d-flex">
-  <input type="text" name="busqueda" class="form-control me-2" placeholder="Buscar ubicación..." value="{{ busqueda }}">
-  <button type="submit" class="btn btn-primary">Buscar</button>
-</form>
-
-<a href="{% url 'crear_ubicacion' %}" class="btn btn-success mb-3">Nueva Ubicación</a>
-
-<table class="table table-striped datatable">
+<table id="tabla-ubicaciones" class="table table-striped">
   <thead>
     <tr>
       <th>Nombre</th>
@@ -21,18 +12,26 @@
     </tr>
   </thead>
   <tbody>
-    {% for ubicacion in ubicaciones %}
-      <tr>
-        <td>{{ ubicacion.nombre }}</td>
-        <td>{{ ubicacion.descripcion }}</td>
-        <td>
-          <a href="{% url 'editar_ubicacion' ubicacion.id %}" class="btn btn-sm btn-warning">Editar</a>
-          <a href="{% url 'eliminar_ubicacion' ubicacion.id %}" class="btn btn-sm btn-danger">Eliminar</a>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="3">No se encontraron ubicaciones.</td></tr>
+    {% for ub in ubicaciones %}
+    <tr>
+      <td>{{ ub.nombre }}</td>
+      <td>{{ ub.descripcion }}</td>
+      <td>
+        <a href="{% url 'editar_ubicacion' ub.pk %}" class="btn btn-sm btn-warning">✏️</a>
+        <a href="{% url 'eliminar_ubicacion' ub.pk %}" class="btn btn-sm btn-danger">🗑️</a>
+      </td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  $(function(){
+    $('#tabla-ubicaciones').DataTable({
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+  });
+</script>
 {% endblock %}

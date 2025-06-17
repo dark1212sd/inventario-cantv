@@ -3,39 +3,38 @@
 
 {% block content %}
 <h2>Usuarios y Roles</h2>
-
-<form method="get" class="mb-4 d-flex">
-  <input type="text" name="busqueda" class="form-control me-2" placeholder="Buscar por nombre o correo..." value="{{ request.GET.busqueda }}">
-  <button type="submit" class="btn btn-primary">Buscar</button>
-</form>
-
-<a href="{% url 'crear_usuario' %}" class="btn btn-success mb-3">Crear Nuevo Usuario</a>
-
-<table class="table table-striped datatable">
+<table id="tabla-usuarios" class="table table-striped">
   <thead>
     <tr>
-      <th>Nombre de Usuario</th>
-      <th>Correo Electrónico</th>
-      <th>Rol / Grupo</th>
+      <th>Usuario</th>
+      <th>Grupos</th>
       <th>Permisos</th>
       <th>Acciones</th>
     </tr>
   </thead>
   <tbody>
-    {% for user in usuarios %}
-      <tr>
-        <td>{{ user.username }}</td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.groups.all|join:", " }}</td>
-        <td>{{ user.get_all_permissions|join:", " }}</td>
-        <td>
-          <a href="{% url 'editar_usuario' user.id %}" class="btn btn-sm btn-warning">Editar</a>
-          <a href="{% url 'eliminar_usuario' user.id %}" class="btn btn-sm btn-danger">Eliminar</a>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="5">No se encontraron usuarios.</td></tr>
+    {% for u in usuarios %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td>{{ u.groups.all|join:", " }}</td>
+      <td>{{ u.get_all_permissions|join:", " }}</td>
+      <td>
+        <a href="{% url 'editar_usuario' u.pk %}" class="btn btn-sm btn-warning">✏️</a>
+        <a href="{% url 'eliminar_usuario' u.pk %}" class="btn btn-sm btn-danger">🗑️</a>
+      </td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  $(function(){
+    $('#tabla-usuarios').DataTable({
+      pageLength: 10,
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+  });
+</script>
 {% endblock %}

@@ -1,18 +1,9 @@
 {% extends 'gestion_activos/base.html' %}
-
-{% block title %}Categorías{% endblock %}
+{% block title %}Lista de Categorías{% endblock %}
 
 {% block content %}
 <h2>Categorías</h2>
-
-<form method="get" class="mb-3 d-flex">
-  <input type="text" name="busqueda" class="form-control me-2" placeholder="Buscar categoría..." value="{{ busqueda }}">
-  <button type="submit" class="btn btn-primary">Buscar</button>
-</form>
-
-<a href="{% url 'crear_categoria' %}" class="btn btn-success mb-3">Nueva Categoría</a>
-
-<table class="table table-striped datatable">
+<table id="tabla-categorias" class="table table-striped">
   <thead>
     <tr>
       <th>Nombre</th>
@@ -21,18 +12,26 @@
     </tr>
   </thead>
   <tbody>
-    {% for categoria in categorias %}
-      <tr>
-        <td>{{ categoria.nombre }}</td>
-        <td>{{ categoria.descripcion }}</td>
-        <td>
-          <a href="{% url 'editar_categoria' categoria.id %}" class="btn btn-sm btn-warning">Editar</a>
-          <a href="{% url 'eliminar_categoria' categoria.id %}" class="btn btn-sm btn-danger">Eliminar</a>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="3">No se encontraron categorías.</td></tr>
+    {% for cat in categorias %}
+    <tr>
+      <td>{{ cat.nombre }}</td>
+      <td>{{ cat.descripcion }}</td>
+      <td>
+        <a href="{% url 'editar_categoria' cat.pk %}" class="btn btn-sm btn-warning">✏️</a>
+        <a href="{% url 'eliminar_categoria' cat.pk %}" class="btn btn-sm btn-danger">🗑️</a>
+      </td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  $(function(){
+    $('#tabla-categorias').DataTable({
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+  });
+</script>
 {% endblock %}

@@ -1,14 +1,43 @@
-{% extends "gestion_activos/base.html" %}
+{% extends 'gestion_activos/base.html' %}
 {% load static %}
 
+{% block title %}{{ titulo }}{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>{{ titulo }}</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Cancelar</a>
-    </form>
-</div>
+<h2>{{ titulo }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    {{ form.codigo.label_tag }}
+    {{ form.codigo }}
+  </div>
+  <div class="mb-3">
+    {{ form.nombre.label_tag }}
+    {{ form.nombre }}
+  </div>
+  <div class="mb-3">
+    {{ form.descripcion.label_tag }}
+    {{ form.descripcion }}
+  </div>
+  <div class="mb-3">
+    {{ form.categoria.label_tag }}
+    {{ form.categoria }}
+  </div>
+  <div class="mb-3">
+    {{ form.ubicacion.label_tag }}
+    {{ form.ubicacion }}
+  </div>
+  <div class="mb-3">
+    {{ form.estado.label_tag }}
+    {{ form.estado }}
+  </div>
+  <div class="mb-3">
+    {{ form.responsable.label_tag }}
+    {{ form.responsable }}
+  </div>
+
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Cancelar</a>
+</form>
 {% endblock %}
