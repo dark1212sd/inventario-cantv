@@ -12,6 +12,7 @@ defusedxml==0.7.1
 dj-database-url==2.3.0
 Django==5.2
 django-allauth==65.7.0
+django-anymail==13.0
 et_xmlfile==2.0.0
 gunicorn==23.0.0
 html5lib==1.1
@@ -28,6 +29,7 @@ pyhanko-certvalidator==0.26.8
 PyJWT==2.10.1
 pypdf==5.4.0
 python-bidi==0.6.6
+python-decouple==3.8
 python-dotenv==1.1.0
 PyYAML==6.0.2
 qrcode==8.2
