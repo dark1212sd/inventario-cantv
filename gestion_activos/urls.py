@@ -3,7 +3,6 @@ from django.urls import path, include
 from . import views
 from gestion_activos.views import lista_usuarios, crear_usuario
 
-
 urlpatterns = [
     # --- Autenticación ---
     path('login/', views.login_view, name='login'),

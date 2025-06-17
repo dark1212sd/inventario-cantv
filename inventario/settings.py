@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
+from decouple import config
 
 
 # 1. Carga variables de entorno desde .env
@@ -34,6 +35,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    "anymail",
 ]
 
 SITE_ID = 1
@@ -123,5 +125,11 @@ ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
 DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
 # settings.py
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+ANYMAIL = {
+    "POSTMARK_SERVER_TOKEN": config("POSTMARK_TOKEN")
+}
+DEFAULT_FROM_EMAIL = "noreply@tudominio.com"  # Debe estar verificado en Postmark
+EMAIL_USE_TLS = True
+
 EMAIL_HOST_USER = 'no-reply@inventario.com'
