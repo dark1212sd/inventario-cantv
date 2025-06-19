@@ -106,7 +106,7 @@ USE_TZ = True
 # 11. Archivos estáticos y media
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'        # para collectstatic
-SSTATICFILES_DIRS = [BASE_DIR / 'gestion_activos' / 'static']    # tu CSS/JS local
+STATICFILES_DIRS = [BASE_DIR / 'gestion_activos' / 'static'] # tu CSS/JS local
 # activa compresión de WhiteNoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
