@@ -1,0 +1,53 @@
+{% extends 'gestion_activos/base.html' %}
+
+{% block title %}Bitácora de Acciones{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Bitácora de Acciones del Sistema</h1>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Registros de Actividad</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Objeto Modificado</th>
+                            <th>Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td>{{ log.usuario.username|default:"Sistema" }}</td>
+                            <td>
+                                {% if log.accion == 'CREACIÓN' %}
+                                    <span class="badge badge-success">{{ log.get_accion_display }}</span>
+                                {% elif log.accion == 'ACTUALIZACIÓN' %}
+                                    <span class="badge badge-warning">{{ log.get_accion_display }}</span>
+                                {% elif log.accion == 'ELIMINACIÓN' %}
+                                    <span class="badge badge-danger">{{ log.get_accion_display }}</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ log.get_accion_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.content_type.model|capfirst }} (ID: {{ log.object_id }})</td>
+                            <td>{{ log.detalles }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

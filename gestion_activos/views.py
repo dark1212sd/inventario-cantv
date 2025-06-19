@@ -20,10 +20,13 @@ from gestion_activos.forms import (
 from gestion_activos.models import Categoria, Ubicacion, Activo
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from .models import LogAccion # Añadir al principio de las importaciones
 
 
 def es_admin_sistema(user):
     return user.groups.filter(name='Administrador del Sistema').exists()
+
 # --- CRUD permisos de grupo ---
 @login_required
 @grupo_requerido('Administrador')
@@ -44,48 +47,60 @@ def crear_usuario(request):
     if request.method == 'POST':
         form = UsuarioForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            if form.cleaned_data['password']:
-                user.set_password(form.cleaned_data['password'])
-            user.save()
-            grupo = form.cleaned_data['grupo']
-            user.groups.set([grupo])
+            nuevo_usuario = form.save()
+            # NUEVO: Registrar la acción en la bitácora
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_CREACION,
+                content_type=ContentType.objects.get_for_model(nuevo_usuario),
+                object_id=nuevo_usuario.id,
+                detalles=f'Se creó el usuario: {nuevo_usuario.username}'
+            )
+            messages.success(request, 'Usuario creado correctamente.')
             return redirect('lista_usuarios')
     else:
         form = UsuarioForm()
-    return render(request, 'gestion_activos/usuario_form.html', {'form': form, 'titulo': 'Crear Usuario'})
+    return render(request, 'gestion_activos/usuario_form.html', {'form': form})
 
 @login_required
 @grupo_requerido('Administrador')
 def editar_usuario(request, pk):
-    user = get_object_or_404(User, pk=pk)
+    usuario_a_editar = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
-        form = UsuarioForm(request.POST, instance=user)
+        form = UsuarioForm(request.POST, instance=usuario_a_editar)
         if form.is_valid():
-            user = form.save(commit=False)
-            if form.cleaned_data['password']:
-                user.set_password(form.cleaned_data['password'])
-            user.save()
-            grupo = form.cleaned_data['grupo']
-            user.groups.set([grupo])
+            usuario_actualizado = form.save()
+            # NUEVO: Registrar la acción en la bitácora
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_ACTUALIZACION,
+                content_type=ContentType.objects.get_for_model(usuario_actualizado),
+                object_id=usuario_actualizado.id,
+                detalles=f'Se actualizó el usuario: {usuario_actualizado.username}'
+            )
+            messages.success(request, 'Usuario actualizado correctamente.')
             return redirect('lista_usuarios')
     else:
-        form = UsuarioForm(instance=user)
-        if user.groups.exists():
-            form.fields['grupo'].initial = user.groups.first()
-    return render(request, 'gestion_activos/usuario_form.html', {'form': form, 'titulo': 'Editar Usuario'})
+        form = UsuarioForm(instance=usuario_a_editar)
+    return render(request, 'gestion_activos/usuario_form.html', {'form': form})
 
 @login_required
 @grupo_requerido('Administrador')
 def eliminar_usuario(request, pk):
-    user = get_object_or_404(User, pk=pk)
+    usuario_a_eliminar = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
-        user.delete()
+        # NUEVO: Registrar la acción ANTES de eliminar el objeto
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_ELIMINACION,
+            content_type=ContentType.objects.get_for_model(usuario_a_eliminar),
+            object_id=usuario_a_eliminar.id,
+            detalles=f'Se eliminó al usuario: {usuario_a_eliminar.username}'
+        )
+        usuario_a_eliminar.delete()
+        messages.success(request, 'Usuario eliminado correctamente.')
         return redirect('lista_usuarios')
-    return render(request, 'gestion_activos/usuario_confirm_delete.html', {'obj': user})
-
-def sin_permisos(request):
-    return render(request, 'gestion_activos/sin_permisos.html')
+    return render(request, 'gestion_activos/usuario_confirm_delete.html', {'object': usuario_a_eliminar})
 
 # --- CRUD login ---
 def login_view(request):
@@ -211,11 +226,21 @@ def crear_categoria(request):
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
         if form.is_valid():
-            form.save()
+            nueva_categoria = form.save()
+            # NUEVO: Registrar la acción en la bitácora
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_CREACION,
+                content_type=ContentType.objects.get_for_model(nueva_categoria),
+                object_id=nueva_categoria.id,
+                detalles=f'Se creó la categoría: {nueva_categoria.nombre}'
+            )
+            messages.success(request, 'Categoría creada correctamente.')
             return redirect('lista_categorias')
     else:
         form = CategoriaForm()
-    return render(request, 'gestion_activos/categoria_form.html', {'form': form, 'titulo': 'Crear Categoría'})
+    return render(request, 'gestion_activos/categoria_form.html', {'form': form})
+
 
 @login_required
 @grupo_requerido("Administrador")
@@ -224,11 +249,20 @@ def editar_categoria(request, pk):
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
         if form.is_valid():
-            form.save()
+            categoria_actualizada = form.save()
+            # NUEVO: Registrar la acción en la bitácora
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_ACTUALIZACION,
+                content_type=ContentType.objects.get_for_model(categoria_actualizada),
+                object_id=categoria_actualizada.id,
+                detalles=f'Se actualizó la categoría: {categoria_actualizada.nombre}'
+            )
+            messages.success(request, 'Categoría actualizada correctamente.')
             return redirect('lista_categorias')
     else:
         form = CategoriaForm(instance=categoria)
-    return render(request, 'gestion_activos/categoria_form.html', {'form': form, 'titulo': 'Editar Categoría'})
+    return render(request, 'gestion_activos/categoria_form.html', {'form': form})
 
 
 @login_required
@@ -236,9 +270,18 @@ def editar_categoria(request, pk):
 def eliminar_categoria(request, pk):
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
+        # NUEVO: Registrar la acción ANTES de eliminar el objeto
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_ELIMINACION,
+            content_type=ContentType.objects.get_for_model(categoria),
+            object_id=categoria.id,
+            detalles=f'Se eliminó la categoría: {categoria.nombre}'
+        )
         categoria.delete()
+        messages.success(request, 'Categoría eliminada correctamente.')
         return redirect('lista_categorias')
-    return render(request, 'gestion_activos/categoria_confirm_delete.html', {'obj': categoria})
+    return render(request, 'gestion_activos/categoria_confirm_delete.html', {'object': categoria})
 
 
 # --- CRUD Ubicaciones ---
@@ -261,11 +304,20 @@ def crear_ubicacion(request):
     if request.method == 'POST':
         form = UbicacionForm(request.POST)
         if form.is_valid():
-            form.save()
+            nueva_ubicacion = form.save()
+            # NUEVO: Registrar la acción en la bitácora
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_CREACION,
+                content_type=ContentType.objects.get_for_model(nueva_ubicacion),
+                object_id=nueva_ubicacion.id,
+                detalles=f'Se creó la ubicación: {nueva_ubicacion.nombre}'
+            )
+            messages.success(request, 'Ubicación creada correctamente.')
             return redirect('lista_ubicaciones')
     else:
         form = UbicacionForm()
-    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form, 'titulo': 'Crear Ubicación'})
+    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form})
 
 
 @login_required
@@ -275,21 +327,39 @@ def editar_ubicacion(request, pk):
     if request.method == 'POST':
         form = UbicacionForm(request.POST, instance=ubicacion)
         if form.is_valid():
-            form.save()
+            ubicacion_actualizada = form.save()
+            # NUEVO: Registrar la acción en la bitácora
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_ACTUALIZACION,
+                content_type=ContentType.objects.get_for_model(ubicacion_actualizada),
+                object_id=ubicacion_actualizada.id,
+                detalles=f'Se actualizó la ubicación: {ubicacion_actualizada.nombre}'
+            )
+            messages.success(request, 'Ubicación actualizada correctamente.')
             return redirect('lista_ubicaciones')
     else:
         form = UbicacionForm(instance=ubicacion)
-    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form, 'titulo': 'Editar Ubicación'})
-
+    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form})
 
 @login_required
 @grupo_requerido("Administrador")
 def eliminar_ubicacion(request, pk):
     ubicacion = get_object_or_404(Ubicacion, pk=pk)
     if request.method == 'POST':
+        # NUEVO: Registrar la acción ANTES de eliminar el objeto
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_ELIMINACION,
+            content_type=ContentType.objects.get_for_model(ubicacion),
+            object_id=ubicacion.id,
+            detalles=f'Se eliminó la ubicación: {ubicacion.nombre}'
+        )
         ubicacion.delete()
+        messages.success(request, 'Ubicación eliminada correctamente.')
         return redirect('lista_ubicaciones')
-    return render(request, 'gestion_activos/ubicacion_confirm_delete.html', {'obj': ubicacion})
+    return render(request, 'gestion_activos/ubicacion_confirm_delete.html', {'object': ubicacion})
+
 
 
 # --- Reportes PDF ---
@@ -328,7 +398,7 @@ def reporte_pdf(request):
 
 # --- Exportar a Excel ---
 @login_required
-@grupo_requerido("Auditor", "Administrador")
+
 def exportar_excel(request):
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
@@ -386,3 +456,21 @@ def contacto(request):
 
         return HttpResponse("Correo enviado correctamente")
     return render(request, 'formulario_contacto.html')
+
+
+@login_required
+def sin_permisos(request):
+    """
+    Página que se muestra cuando un usuario intenta acceder a una sección
+    para la que no tiene los permisos de grupo requeridos.
+    """
+    return render(request, 'gestion_activos/sin_permisos.html')
+
+@login_required
+@grupo_requerido("Auditor", "Administrador")
+def vista_bitacora(request):
+    logs = LogAccion.objects.all()
+    context = {
+        'logs': logs
+    }
+    return render(request, 'gestion_activos/vista_bitacora.html', context)

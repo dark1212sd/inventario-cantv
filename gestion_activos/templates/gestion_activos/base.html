@@ -108,6 +108,14 @@
           <i class="fas fa-users me-2"></i> Usuarios y Roles
         </a>
       </li>
+      {% if user.groups.all.0.name == 'Administrador' or user.groups.all.0.name == 'Supervisor' %}
+      <li class="nav-item {% if request.resolver_match.url_name == 'vista_bitacora' %}active{% endif %}">
+        <a class="nav-link" href="{% url 'vista_bitacora' %}">
+          <i class="fas fa-history"></i>
+          <span>Bitácora</span>
+        </a>
+      </li>
+      {% endif %}
       <li class="nav-item mt-auto">
         <a class="nav-link" href="{% url 'logout' %}">
           <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
