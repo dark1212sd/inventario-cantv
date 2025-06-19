@@ -38,5 +38,5 @@ urlpatterns = [
     path('reporte/excel/', views.exportar_excel, name='exportar_excel'),
 
 # --- Bitacora ---
-
+    path('bitacora/', views.vista_bitacora, name='vista_bitacora'),
 ]
