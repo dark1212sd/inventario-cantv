@@ -4,62 +4,67 @@
 {% block title %}Lista de Activos{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">
-  <i class="fas fa-clipboard-list text-primary"></i> <span class="fw-bold text-primary">Lista de Activos</span>
-</h2>
-
-<!-- Botones de acción -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-  <div class="btn-group gap-2">
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm">
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="fw-bold text-primary">
+    <i class="fas fa-clipboard-list me-2"></i>Lista de Activos
+  </h2>
+  <div class="d-flex gap-2">
+    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm animate__animated animate__fadeIn">
       <i class="fas fa-plus"></i> Nuevo Activo
     </a>
     <a href="{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}"
-       class="btn btn-danger btn-sm">
+       class="btn btn-danger btn-sm animate__animated animate__fadeIn">
       <i class="fas fa-file-pdf"></i> PDF
     </a>
     <a href="{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}"
-       class="btn btn-info btn-sm text-white">
+       class="btn btn-info btn-sm text-white animate__animated animate__fadeIn">
       <i class="fas fa-file-excel"></i> Excel
     </a>
   </div>
 </div>
 
 <!-- Filtros -->
-<form method="get" class="d-flex flex-wrap gap-2 mb-4">
-  <select name="estado" class="form-select form-select-sm" style="max-width: 160px;">
-    <option value="">📁 Estado</option>
-    <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
-    <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
-    <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
-  </select>
+<div class="bg-white shadow-sm rounded p-3 mb-4">
+  <form method="get" class="row g-2">
+    <div class="col-sm-4">
+      <select name="estado" class="form-select">
+        <option value="">📁 Estado</option>
+        <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
+        <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+        <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <select name="categoria" class="form-select">
+        <option value="">📂 Categoría</option>
+        {% for cat in categorias %}
+          <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <select name="ubicacion" class="form-select">
+        <option value="">📍 Ubicación</option>
+        {% for ub in ubicaciones %}
+          <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>
+            {{ ub.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 text-end mt-2">
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="fas fa-filter"></i> Filtrar
+      </button>
+    </div>
+  </form>
+</div>
 
-  <select name="categoria" class="form-select form-select-sm" style="max-width: 180px;">
-    <option value="">📂 Categoría</option>
-    {% for cat in categorias %}
-      <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>
-        {{ cat.nombre }}
-      </option>
-    {% endfor %}
-  </select>
-
-  <select name="ubicacion" class="form-select form-select-sm" style="max-width: 180px;">
-    <option value="">📍 Ubicación</option>
-    {% for ub in ubicaciones %}
-      <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>
-        {{ ub.nombre }}
-      </option>
-    {% endfor %}
-  </select>
-
-  <button type="submit" class="btn btn-primary btn-sm">
-    <i class="fas fa-filter"></i> Filtrar
-  </button>
-</form>
-
-<!-- Tabla de activos -->
+<!-- Tabla -->
 <div class="table-responsive">
-  <table id="tabla-activos" class="table table-bordered table-hover align-middle">
+  <table id="tabla-activos" class="table table-bordered shadow-sm">
     <thead class="table-primary text-center">
       <tr>
         <th>Código</th>
@@ -98,46 +103,21 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Estilo animado para barra de búsqueda -->
-<style>
-  .dataTables_filter {
-    position: relative;
-  }
-
-  .dataTables_filter input {
-    padding-left: 30px;
-    transition: width 0.4s ease;
-    width: 160px;
-  }
-
-  .dataTables_filter::before {
-    content: "\f002";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-  }
-
-  .dataTables_filter input:focus {
-    width: 250px;
-  }
-</style>
-
 <script>
   $(document).ready(function () {
-    $('#tabla-activos').DataTable({
+    const table = $('#tabla-activos').DataTable({
       language: {
         url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
       },
-      initComplete: function () {
-        $('.dataTables_filter input')
-          .attr("placeholder", "Buscar activo")
-          .addClass("form-control form-control-sm");
-      }
+      dom: 'ftip',
     });
+
+    // Estilo personalizado al buscador
+    const input = $('#tabla-activos_filter input');
+    input.attr('placeholder', 'Buscar activo');
+    input.addClass('form-control rounded-pill ps-5');
+    input.before('<i class="fas fa-search position-absolute ms-3 mt-2 text-muted"></i>');
+    $('#tabla-activos_filter').css('position', 'relative');
   });
 </script>
 {% endblock %}

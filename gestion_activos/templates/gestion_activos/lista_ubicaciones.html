@@ -1,64 +1,54 @@
 {% extends 'gestion_activos/base.html' %}
-{% block title %}Lista de Ubicaciones{% endblock %}
 {% load static %}
+
+{% block title %}Ubicaciones{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="text-primary fw-bold"><i class="fas fa-map-marker-alt me-2"></i>Ubicaciones</h2>
-  <a href="{% url 'crear_ubicacion' %}" class="btn btn-success btn-sm shadow">
-    <i class="fas fa-plus"></i> Agregar Ubicación
+  <h2 class="text-primary"><i class="fas fa-map-marker-alt"></i> Ubicaciones</h2>
+  <a href="{% url 'crear_ubicacion' %}" class="btn btn-success">
+    <i class="fas fa-plus-circle"></i> Nueva Ubicación
   </a>
 </div>
 
-<div class="position-relative mb-3" style="max-width: 240px;">
-  <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"
-     style="cursor:pointer;" id="toggleSearch"></i>
-  <input type="text" id="customSearchBox" class="form-control form-control-sm ps-5"
-         placeholder="Buscar ubicación..." style="display:none;">
-</div>
-
-<div class="card shadow-sm border-0">
-  <div class="card-body bg-light-subtle rounded-2">
-    <table id="tabla-ubicaciones" class="table table-hover table-bordered table-striped rounded-3">
-      <thead class="table-dark">
-        <tr>
-          <th>Nombre</th>
-          <th>Descripción</th>
-          <th class="text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for ub in ubicaciones %}
-        <tr>
-          <td>{{ ub.nombre }}</td>
-          <td>{{ ub.descripcion }}</td>
-          <td class="text-center">
-            <a href="{% url 'editar_ubicacion' ub.pk %}" class="btn btn-sm btn-warning me-1">✏️</a>
-            <a href="{% url 'eliminar_ubicacion' ub.pk %}" class="btn btn-sm btn-danger">🗑️</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="table-responsive">
+  <table id="tabla-ubicaciones" class="table table-bordered table-striped" style="background-color: #e8f8f5;">
+    <thead class="table-dark">
+      <tr>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ub in ubicaciones %}
+      <tr>
+        <td>{{ ub.nombre }}</td>
+        <td>{{ ub.descripcion }}</td>
+        <td>
+          <a href="{% url 'editar_ubicacion' ub.pk %}" class="btn btn-sm btn-warning">✏️</a>
+          <a href="{% url 'eliminar_ubicacion' ub.pk %}" class="btn btn-sm btn-danger">🗑️</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
   $(document).ready(function () {
-    const table = $('#tabla-ubicaciones').DataTable({
+    $('#tabla-ubicaciones').DataTable({
       language: {
         url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+      },
+      initComplete: function () {
+        $('#tabla-ubicaciones_filter input')
+          .addClass('form-control ms-2 animated-search')
+          .attr('placeholder', '🔍 Buscar ubicación')
+          .css('width', '250px');
       }
-    });
-
-    $('#toggleSearch').click(function () {
-      $('#customSearchBox').fadeToggle().focus();
-    });
-
-    $('#customSearchBox').on('keyup', function () {
-      table.search(this.value).draw();
     });
   });
 </script>
