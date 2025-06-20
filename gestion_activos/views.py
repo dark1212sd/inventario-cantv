@@ -103,21 +103,36 @@ def eliminar_usuario(request, pk):
     return render(request, 'gestion_activos/usuario_confirm_delete.html', {'object': usuario_a_eliminar})
 
 # --- CRUD login ---
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+    def login_view(request):
+        if request.user.is_authenticated:
+            if request.user.groups.filter(name='Usuario').exists():
+                return redirect('mis_activos')
+            else:
+                return redirect('lista_activos')
 
-        user = authenticate(request, username=username, password=password)
+        if request.method == 'POST':
+            form = LoginForm(request.POST)
+            if form.is_valid():
+                username = form.cleaned_data['username']
+                password = form.cleaned_data['password']
+                user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            login(request, user)
-            next_url = request.GET.get('next') or 'lista_activos'
-            return redirect(next_url)
+                if user is not None:
+                    login(request, user)
+                    messages.success(request, f'Bienvenido de nuevo, {user.username}!')
+                    if request.user.groups.filter(name='Usuario').exists():
+                        return redirect('mis_activos')
+                    else:
+                        return redirect('lista_activos')
+                else:
+                    messages.error(request, 'Usuario o contraseña incorrectos.')
+            else:
+                messages.error(request, 'Por favor, corrige los errores en el formulario.')
         else:
-            messages.error(request, 'Usuario o contraseña incorrectos.')
+            form = LoginForm()
 
-    return render(request, 'gestion_activos/login.html')
+        return render(request, 'gestion_activos/login.html', {'form': form})
+
 
 def logout_view(request):
     logout(request)
@@ -474,3 +489,17 @@ def vista_bitacora(request):
         'logs': logs
     }
     return render(request, 'gestion_activos/vista_bitacora.html', context)
+
+
+@login_required
+def mis_activos(request):
+    """
+    Muestra una lista de activos asignados al usuario logueado.
+    """
+    # Filtramos los activos donde el responsable es el usuario actual
+    activos_del_usuario = Activo.objects.filter(responsable=request.user)
+
+    context = {
+        'activos': activos_del_usuario
+    }
+    return render(request, 'gestion_activos/mis_activos.html', context)

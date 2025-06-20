@@ -37,6 +37,8 @@ urlpatterns = [
     path('reporte/pdf/', views.reporte_pdf, name='reporte_pdf'),
     path('reporte/excel/', views.exportar_excel, name='exportar_excel'),
 
-# --- Bitacora ---
+    # --- Bitacora ---
     path('bitacora/', views.vista_bitacora, name='vista_bitacora'),
+    # --- Activos ---
+    path('mis-activos/', views.mis_activos, name='mis_activos'),
 ]
