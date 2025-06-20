@@ -1,150 +1,85 @@
+# Librerías estándar de Python
 from io import BytesIO
-import openpyxl
-from django.db.models import Q
-from .forms import UsuarioForm
+
+# Librerías de Django
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.template.loader import render_to_string
-from django.contrib.auth.models import Group
-from django.utils.timezone import localtime
-from xhtml2pdf import pisa
-from gestion_activos.utils.decoradores import grupo_requerido
-# your app
-from gestion_activos.forms import (
-    ActivoForm, CategoriaForm, UbicacionForm, UsuarioForm
-)
-from gestion_activos.models import Categoria, Ubicacion, Activo
-from django.core.mail import send_mail
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from .models import LogAccion # Añadir al principio de las importaciones
+from django.conf import settings
+from django.db.models import Q
+
+# Librerías de terceros
+import openpyxl
+from xhtml2pdf import pisa
+
+# Módulos locales de la aplicación
+from .models import Categoria, Ubicacion, Activo, LogAccion
+from .forms import (
+    LoginForm, ActivoForm, CategoriaForm, UbicacionForm,
+    UsuarioForm, UsuarioActivoForm
+)
+from .utils.decoradores import grupo_requerido
 
 
-def es_admin_sistema(user):
-    return user.groups.filter(name='Administrador del Sistema').exists()
+# --- Vistas de Autenticación y Permisos ---
 
-# --- CRUD permisos de grupo ---
-@login_required
-@grupo_requerido('Administrador')
-def lista_usuarios(request):
-    busqueda = request.GET.get('busqueda', '').strip()
-    usuarios = User.objects.all()
-    if busqueda:
-        usuarios = usuarios.filter(
-            Q(username__icontains=busqueda) | Q(email__icontains=busqueda)
-        )
-    return render(request, 'gestion_activos/lista_usuarios.html', {
-        'usuarios': usuarios,
-    })
-
-@login_required
-@grupo_requerido('Administrador')
-def crear_usuario(request):
-    if request.method == 'POST':
-        form = UsuarioForm(request.POST)
-        if form.is_valid():
-            nuevo_usuario = form.save()
-            # NUEVO: Registrar la acción en la bitácora
-            LogAccion.objects.create(
-                usuario=request.user,
-                accion=LogAccion.ACCION_CREACION,
-                content_type=ContentType.objects.get_for_model(nuevo_usuario),
-                object_id=nuevo_usuario.id,
-                detalles=f'Se creó el usuario: {nuevo_usuario.username}'
-            )
-            messages.success(request, 'Usuario creado correctamente.')
-            return redirect('lista_usuarios')
-    else:
-        form = UsuarioForm()
-    return render(request, 'gestion_activos/usuario_form.html', {'form': form})
-
-@login_required
-@grupo_requerido('Administrador')
-def editar_usuario(request, pk):
-    usuario_a_editar = get_object_or_404(User, pk=pk)
-    if request.method == 'POST':
-        form = UsuarioForm(request.POST, instance=usuario_a_editar)
-        if form.is_valid():
-            usuario_actualizado = form.save()
-            # NUEVO: Registrar la acción en la bitácora
-            LogAccion.objects.create(
-                usuario=request.user,
-                accion=LogAccion.ACCION_ACTUALIZACION,
-                content_type=ContentType.objects.get_for_model(usuario_actualizado),
-                object_id=usuario_actualizado.id,
-                detalles=f'Se actualizó el usuario: {usuario_actualizado.username}'
-            )
-            messages.success(request, 'Usuario actualizado correctamente.')
-            return redirect('lista_usuarios')
-    else:
-        form = UsuarioForm(instance=usuario_a_editar)
-    return render(request, 'gestion_activos/usuario_form.html', {'form': form})
-
-@login_required
-@grupo_requerido('Administrador')
-def eliminar_usuario(request, pk):
-    usuario_a_eliminar = get_object_or_404(User, pk=pk)
-    if request.method == 'POST':
-        # NUEVO: Registrar la acción ANTES de eliminar el objeto
-        LogAccion.objects.create(
-            usuario=request.user,
-            accion=LogAccion.ACCION_ELIMINACION,
-            content_type=ContentType.objects.get_for_model(usuario_a_eliminar),
-            object_id=usuario_a_eliminar.id,
-            detalles=f'Se eliminó al usuario: {usuario_a_eliminar.username}'
-        )
-        usuario_a_eliminar.delete()
-        messages.success(request, 'Usuario eliminado correctamente.')
-        return redirect('lista_usuarios')
-    return render(request, 'gestion_activos/usuario_confirm_delete.html', {'object': usuario_a_eliminar})
-
-# --- CRUD login ---
-    def login_view(request):
-        if request.user.is_authenticated:
-            if request.user.groups.filter(name='Usuario').exists():
-                return redirect('mis_activos')
-            else:
-                return redirect('lista_activos')
-
-        if request.method == 'POST':
-            form = LoginForm(request.POST)
-            if form.is_valid():
-                username = form.cleaned_data['username']
-                password = form.cleaned_data['password']
-                user = authenticate(request, username=username, password=password)
-
-                if user is not None:
-                    login(request, user)
-                    messages.success(request, f'Bienvenido de nuevo, {user.username}!')
-                    if request.user.groups.filter(name='Usuario').exists():
-                        return redirect('mis_activos')
-                    else:
-                        return redirect('lista_activos')
-                else:
-                    messages.error(request, 'Usuario o contraseña incorrectos.')
-            else:
-                messages.error(request, 'Por favor, corrige los errores en el formulario.')
+def login_view(request):
+    """Maneja el inicio de sesión del usuario y lo redirige según su rol."""
+    if request.user.is_authenticated:
+        if request.user.groups.filter(name='Usuario').exists():
+            return redirect('mis_activos')
         else:
-            form = LoginForm()
+            return redirect('lista_activos')
 
-        return render(request, 'gestion_activos/login.html', {'form': form})
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Bienvenido de nuevo, {user.username}!')
+                if request.user.groups.filter(name='Usuario').exists():
+                    return redirect('mis_activos')
+                else:
+                    return redirect('lista_activos')
+            else:
+                messages.error(request, 'Usuario o contraseña incorrectos.')
+    else:
+        form = LoginForm()
+
+    return render(request, 'gestion_activos/login.html', {'form': form})
 
 
 def logout_view(request):
+    """Cierra la sesión del usuario."""
     logout(request)
+    messages.info(request, 'Has cerrado sesión exitosamente.')
     return redirect('login')
 
-# --- CRUD Activos ---
+
+@login_required
+def sin_permisos(request):
+    """Página que se muestra cuando un usuario no tiene permisos."""
+    return render(request, 'gestion_activos/sin_permisos.html')
+
+
+# --- Vistas Principales (Dashboards) ---
+
 @login_required
 def lista_activos(request):
-    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
+    """Muestra la lista general de todos los activos con filtros."""
+    activos = Activo.objects.select_related('categoria', 'ubicacion', 'responsable').all()
     categorias = Categoria.objects.all()
     ubicaciones = Ubicacion.objects.all()
 
+    # Aplicar filtros desde la URL (GET parameters)
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
@@ -156,36 +91,46 @@ def lista_activos(request):
     if ubicacion_id:
         activos = activos.filter(ubicacion_id=ubicacion_id)
 
-    return render(request, 'gestion_activos/lista_activos.html', {
+    context = {
         'activos': activos,
         'categorias': categorias,
         'ubicaciones': ubicaciones,
         'estado_seleccionado': estado,
-        'categoria_seleccionada': categoria_id,
-        'ubicacion_seleccionada': ubicacion_id
-    })
-    # Verificación de grupo para mostrar botones de acciones
-    es_admin = request.user.groups.filter(name="Administrador").exists()
+        'categoria_seleccionada': int(categoria_id) if categoria_id else None,
+        'ubicacion_seleccionada': int(ubicacion_id) if ubicacion_id else None,
+        'es_admin': request.user.groups.filter(name="Administrador").exists() or request.user.is_superuser
+    }
+    return render(request, 'gestion_activos/lista_activos.html', context)
 
-    return render(request, 'gestion_activos/lista_activos.html', {
-        'activos': activos,
-        'categorias': categorias,
-        'ubicaciones': ubicaciones,
-        'estado_seleccionado': estado,
-        'categoria_seleccionada': categoria_id,
-        'ubicacion_seleccionada': ubicacion_id,
-        'categoria_nombre': categoria_nombre,
-        'ubicacion_nombre': ubicacion_nombre,
-        'es_admin': es_admin,
-    })
+
+@login_required
+def mis_activos(request):
+    """Muestra una lista de activos asignados al usuario logueado."""
+    activos_del_usuario = Activo.objects.filter(responsable=request.user).select_related('categoria', 'ubicacion')
+    context = {
+        'activos': activos_del_usuario
+    }
+    return render(request, 'gestion_activos/mis_activos.html', context)
+
+
+# --- CRUD de Activos ---
 
 @login_required
 @grupo_requerido("Técnico", "Administrador")
 def registrar_activo(request):
+    """Muestra el formulario para registrar un nuevo activo."""
     if request.method == 'POST':
         form = ActivoForm(request.POST)
         if form.is_valid():
-            form.save()
+            nuevo_activo = form.save()
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_CREACION,
+                content_type=ContentType.objects.get_for_model(nuevo_activo),
+                object_id=nuevo_activo.id,
+                detalles=f'Se registró el activo: {nuevo_activo.nombre}'
+            )
+            messages.success(request, 'Activo registrado correctamente.')
             return redirect('lista_activos')
     else:
         form = ActivoForm()
@@ -194,55 +139,84 @@ def registrar_activo(request):
         'titulo': 'Registrar Activo'
     })
 
+
 @login_required
-@grupo_requerido("Técnico", "Administrador")
+@grupo_requerido("Técnico", "Administrador", "Usuario")
 def editar_activo(request, pk):
+    """Permite editar un activo, con lógica de permisos por rol."""
     activo = get_object_or_404(Activo, pk=pk)
+    es_usuario_regular = request.user.groups.filter(name='Usuario').exists()
+
+    # Verificación de seguridad: un usuario regular solo puede editar sus propios activos.
+    if es_usuario_regular and activo.responsable != request.user:
+        messages.error(request, 'No tiene permiso para editar este activo.')
+        return redirect('sin_permisos')
+
+    # Se elige el formulario adecuado según el rol del usuario.
+    FormularioAUsar = UsuarioActivoForm if es_usuario_regular else ActivoForm
+
     if request.method == 'POST':
-        form = ActivoForm(request.POST, instance=activo)
+        form = FormularioAUsar(request.POST, instance=activo)
         if form.is_valid():
-            form.save()
-            return redirect('lista_activos')
+            activo_actualizado = form.save()
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_ACTUALIZACION,
+                content_type=ContentType.objects.get_for_model(activo_actualizado),
+                object_id=activo_actualizado.id,
+                detalles=f'Se actualizó el activo: {activo_actualizado.nombre}'
+            )
+            messages.success(request, 'Activo actualizado correctamente.')
+            return redirect('mis_activos' if es_usuario_regular else 'lista_activos')
     else:
-        form = ActivoForm(instance=activo)
+        form = FormularioAUsar(instance=activo)
+
     return render(request, 'gestion_activos/activo_form.html', {
         'form': form,
         'titulo': f'Editar Activo: {activo.nombre}'
     })
 
+
 @login_required
-@grupo_requerido("Técnico", "Administrador")
+@grupo_requerido("Administrador")
 def eliminar_activo(request, pk):
+    """Elimina un activo del sistema."""
     activo = get_object_or_404(Activo, pk=pk)
     if request.method == 'POST':
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_ELIMINACION,
+            content_type=ContentType.objects.get_for_model(activo),
+            object_id=activo.id,
+            detalles=f'Se eliminó el activo: {activo.nombre}'
+        )
         activo.delete()
+        messages.success(request, 'Activo eliminado correctamente.')
         return redirect('lista_activos')
-    return render(request, 'gestion_activos/activo_confirm_delete.html', {
-        'obj': activo
-    })
+    return render(request, 'gestion_activos/activo_confirm_delete.html', {'object': activo})
 
 
-# --- CRUD Categorías ---
+# --- CRUD de Categorías ---
+
 @login_required
 @grupo_requerido('Administrador')
 def lista_categorias(request):
+    """Muestra una lista de todas las categorías."""
     query = request.GET.get('busqueda', '')
     categorias = Categoria.objects.all()
     if query:
         categorias = categorias.filter(nombre__icontains=query)
-    return render(request, 'gestion_activos/lista_categorias.html', {
-        'categorias': categorias,
-        'busqueda': query,
-    })
+    return render(request, 'gestion_activos/lista_categorias.html', {'categorias': categorias})
+
 
 @login_required
 @grupo_requerido('Administrador')
 def crear_categoria(request):
+    """Crea una nueva categoría."""
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
         if form.is_valid():
             nueva_categoria = form.save()
-            # NUEVO: Registrar la acción en la bitácora
             LogAccion.objects.create(
                 usuario=request.user,
                 accion=LogAccion.ACCION_CREACION,
@@ -260,12 +234,12 @@ def crear_categoria(request):
 @login_required
 @grupo_requerido("Administrador")
 def editar_categoria(request, pk):
+    """Edita una categoría existente."""
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
         if form.is_valid():
             categoria_actualizada = form.save()
-            # NUEVO: Registrar la acción en la bitácora
             LogAccion.objects.create(
                 usuario=request.user,
                 accion=LogAccion.ACCION_ACTUALIZACION,
@@ -283,9 +257,9 @@ def editar_categoria(request, pk):
 @login_required
 @grupo_requerido('Administrador')
 def eliminar_categoria(request, pk):
+    """Elimina una categoría."""
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
-        # NUEVO: Registrar la acción ANTES de eliminar el objeto
         LogAccion.objects.create(
             usuario=request.user,
             accion=LogAccion.ACCION_ELIMINACION,
@@ -299,28 +273,27 @@ def eliminar_categoria(request, pk):
     return render(request, 'gestion_activos/categoria_confirm_delete.html', {'object': categoria})
 
 
-# --- CRUD Ubicaciones ---
+# --- CRUD de Ubicaciones ---
+
 @login_required
 @grupo_requerido('Administrador')
 def lista_ubicaciones(request):
+    """Muestra una lista de todas las ubicaciones."""
     query = request.GET.get('busqueda', '')
     ubicaciones = Ubicacion.objects.all()
     if query:
         ubicaciones = ubicaciones.filter(nombre__icontains=query)
-    return render(request, 'gestion_activos/lista_ubicaciones.html', {
-        'ubicaciones': ubicaciones,
-        'busqueda': query,
-    })
+    return render(request, 'gestion_activos/lista_ubicaciones.html', {'ubicaciones': ubicaciones})
 
 
 @login_required
 @grupo_requerido('Administrador')
 def crear_ubicacion(request):
+    """Crea una nueva ubicación."""
     if request.method == 'POST':
         form = UbicacionForm(request.POST)
         if form.is_valid():
             nueva_ubicacion = form.save()
-            # NUEVO: Registrar la acción en la bitácora
             LogAccion.objects.create(
                 usuario=request.user,
                 accion=LogAccion.ACCION_CREACION,
@@ -338,12 +311,12 @@ def crear_ubicacion(request):
 @login_required
 @grupo_requerido("Administrador")
 def editar_ubicacion(request, pk):
+    """Edita una ubicación existente."""
     ubicacion = get_object_or_404(Ubicacion, pk=pk)
     if request.method == 'POST':
         form = UbicacionForm(request.POST, instance=ubicacion)
         if form.is_valid():
             ubicacion_actualizada = form.save()
-            # NUEVO: Registrar la acción en la bitácora
             LogAccion.objects.create(
                 usuario=request.user,
                 accion=LogAccion.ACCION_ACTUALIZACION,
@@ -357,12 +330,13 @@ def editar_ubicacion(request, pk):
         form = UbicacionForm(instance=ubicacion)
     return render(request, 'gestion_activos/ubicacion_form.html', {'form': form})
 
+
 @login_required
 @grupo_requerido("Administrador")
 def eliminar_ubicacion(request, pk):
+    """Elimina una ubicación."""
     ubicacion = get_object_or_404(Ubicacion, pk=pk)
     if request.method == 'POST':
-        # NUEVO: Registrar la acción ANTES de eliminar el objeto
         LogAccion.objects.create(
             usuario=request.user,
             accion=LogAccion.ACCION_ELIMINACION,
@@ -376,13 +350,92 @@ def eliminar_ubicacion(request, pk):
     return render(request, 'gestion_activos/ubicacion_confirm_delete.html', {'object': ubicacion})
 
 
+# --- CRUD de Usuarios ---
 
-# --- Reportes PDF ---
+@login_required
+@grupo_requerido('Administrador')
+def lista_usuarios(request):
+    """Muestra una lista de todos los usuarios del sistema."""
+    busqueda = request.GET.get('busqueda', '').strip()
+    usuarios = User.objects.all()
+    if busqueda:
+        usuarios = usuarios.filter(Q(username__icontains=busqueda) | Q(email__icontains=busqueda))
+    return render(request, 'gestion_activos/lista_usuarios.html', {'usuarios': usuarios})
+
+
+@login_required
+@grupo_requerido('Administrador')
+def crear_usuario(request):
+    """Crea un nuevo usuario y le asigna un grupo/rol."""
+    if request.method == 'POST':
+        form = UsuarioForm(request.POST)
+        if form.is_valid():
+            nuevo_usuario = form.save()
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_CREACION,
+                content_type=ContentType.objects.get_for_model(nuevo_usuario),
+                object_id=nuevo_usuario.id,
+                detalles=f'Se creó el usuario: {nuevo_usuario.username}'
+            )
+            messages.success(request, 'Usuario creado correctamente.')
+            return redirect('lista_usuarios')
+    else:
+        form = UsuarioForm()
+    return render(request, 'gestion_activos/usuario_form.html', {'form': form})
+
+
+@login_required
+@grupo_requerido('Administrador')
+def editar_usuario(request, pk):
+    """Edita los datos y el rol de un usuario existente."""
+    usuario_a_editar = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        form = UsuarioForm(request.POST, instance=usuario_a_editar)
+        if form.is_valid():
+            usuario_actualizado = form.save()
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_ACTUALIZACION,
+                content_type=ContentType.objects.get_for_model(usuario_actualizado),
+                object_id=usuario_actualizado.id,
+                detalles=f'Se actualizó el usuario: {usuario_actualizado.username}'
+            )
+            messages.success(request, 'Usuario actualizado correctamente.')
+            return redirect('lista_usuarios')
+    else:
+        form = UsuarioForm(instance=usuario_a_editar)
+    return render(request, 'gestion_activos/usuario_form.html', {'form': form})
+
+
+@login_required
+@grupo_requerido('Administrador')
+def eliminar_usuario(request, pk):
+    """Elimina un usuario del sistema."""
+    usuario_a_eliminar = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_ELIMINACION,
+            content_type=ContentType.objects.get_for_model(usuario_a_eliminar),
+            object_id=usuario_a_eliminar.id,
+            detalles=f'Se eliminó al usuario: {usuario_a_eliminar.username}'
+        )
+        usuario_a_eliminar.delete()
+        messages.success(request, 'Usuario eliminado correctamente.')
+        return redirect('lista_usuarios')
+    return render(request, 'gestion_activos/usuario_confirm_delete.html', {'object': usuario_a_eliminar})
+
+
+# --- Vistas de Reportes ---
+
 @login_required
 @grupo_requerido("Auditor", "Administrador")
 def reporte_pdf(request):
+    """Genera y descarga un reporte en PDF de los activos (con filtros)."""
+    # Esta lógica de filtrado es la misma que en lista_activos y exportar_excel.
+    # Se podría refactorizar a una función auxiliar si crece en complejidad.
     activos = Activo.objects.select_related('categoria', 'ubicacion').all()
-
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
@@ -390,54 +443,42 @@ def reporte_pdf(request):
     if estado:
         activos = activos.filter(estado=estado)
     if categoria_id:
-        try:
-            activos = activos.filter(categoria_id=int(categoria_id))
-        except ValueError:
-            pass
+        activos = activos.filter(categoria_id=categoria_id)
     if ubicacion_id:
-        try:
-            activos = activos.filter(ubicacion_id=int(ubicacion_id))
-        except ValueError:
-            pass
+        activos = activos.filter(ubicacion_id=ubicacion_id)
 
     context = {'activos': activos}
     html_string = render_to_string('gestion_activos/reporte_pdf.html', context)
-
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="reporte_activos_filtrados.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="reporte_activos.pdf"'
 
     pisa_status = pisa.CreatePDF(html_string, dest=response)
     if pisa_status.err:
-        return HttpResponse('Error al generar el PDF', status=500)
+        return HttpResponse('Error al generar el PDF.', status=500)
     return response
 
-# --- Exportar a Excel ---
-@login_required
 
+@login_required
+@grupo_requerido("Auditor", "Administrador", "Supervisor")
 def exportar_excel(request):
+    """Genera y descarga un reporte en Excel de los activos (con filtros)."""
+    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
     estado = request.GET.get('estado')
     categoria_id = request.GET.get('categoria')
     ubicacion_id = request.GET.get('ubicacion')
 
-    activos = Activo.objects.select_related('categoria', 'ubicacion').all()
-
     if estado:
         activos = activos.filter(estado=estado)
     if categoria_id:
-        try:
-            activos = activos.filter(categoria_id=int(categoria_id))
-        except ValueError:
-            pass
+        activos = activos.filter(categoria_id=categoria_id)
     if ubicacion_id:
-        try:
-            activos = activos.filter(ubicacion_id=int(ubicacion_id))
-        except ValueError:
-            pass
+        activos = activos.filter(ubicacion_id=ubicacion_id)
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Activos"
-    ws.append(['Código', 'Nombre', 'Descripción', 'Categoría', 'Ubicación', 'Estado', 'Fecha de Registro'])
+    ws.append(
+        ['Código', 'Nombre', 'Descripción', 'Categoría', 'Ubicación', 'Estado', 'Responsable', 'Fecha de Registro'])
 
     for activo in activos:
         ws.append([
@@ -447,59 +488,43 @@ def exportar_excel(request):
             activo.categoria.nombre if activo.categoria else '',
             activo.ubicacion.nombre if activo.ubicacion else '',
             activo.get_estado_display(),
-            str(activo.fecha_registro)
+            activo.responsable.username if activo.responsable else '',
+            activo.fecha_registro.strftime("%d/%m/%Y %H:%M") if activo.fecha_registro else ''
         ])
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="activos_filtrados.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="reporte_activos.xlsx"'
     wb.save(response)
     return response
 
 
-def contacto(request):
-    if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        mensaje = request.POST.get('mensaje')
-
-        send_mail(
-            subject=f'Nuevo mensaje de {nombre}',
-            message=mensaje,
-            from_email=settings.DEFAULT_FROM_EMAIL,  # tomado desde settings
-            recipient_list=['destinatario@dominio.com'],
-            fail_silently=False
-        )
-
-        return HttpResponse("Correo enviado correctamente")
-    return render(request, 'formulario_contacto.html')
-
-
-@login_required
-def sin_permisos(request):
-    """
-    Página que se muestra cuando un usuario intenta acceder a una sección
-    para la que no tiene los permisos de grupo requeridos.
-    """
-    return render(request, 'gestion_activos/sin_permisos.html')
+# --- Otras Vistas ---
 
 @login_required
 @grupo_requerido("Auditor", "Administrador")
 def vista_bitacora(request):
-    logs = LogAccion.objects.all()
-    context = {
-        'logs': logs
-    }
-    return render(request, 'gestion_activos/vista_bitacora.html', context)
+    """Muestra la bitácora de acciones del sistema."""
+    logs = LogAccion.objects.select_related('usuario', 'content_type').all().order_by('-timestamp')
+    return render(request, 'gestion_activos/vista_bitacora.html', {'logs': logs})
 
 
-@login_required
-def mis_activos(request):
-    """
-    Muestra una lista de activos asignados al usuario logueado.
-    """
-    # Filtramos los activos donde el responsable es el usuario actual
-    activos_del_usuario = Activo.objects.filter(responsable=request.user)
+def contacto(request):
+    """Muestra y procesa el formulario de contacto."""
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', 'Anónimo')
+        mensaje = request.POST.get('mensaje', '')
+        email_remitente = request.POST.get('email', '')
 
-    context = {
-        'activos': activos_del_usuario
-    }
-    return render(request, 'gestion_activos/mis_activos.html', context)
+        mensaje_completo = f"Mensaje de: {nombre} ({email_remitente})\n\n{mensaje}"
+
+        send_mail(
+            subject=f'Nuevo mensaje de contacto desde el sistema',
+            message=mensaje_completo,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.EMAIL_CONTACTO],  # Se recomienda definir esta variable en settings.py
+            fail_silently=False
+        )
+        messages.success(request, 'Tu mensaje ha sido enviado correctamente. Gracias por contactarnos.')
+        return redirect('lista_activos')  # O a una página de 'gracias'
+
+    return render(request, 'gestion_activos/contacto.html')
