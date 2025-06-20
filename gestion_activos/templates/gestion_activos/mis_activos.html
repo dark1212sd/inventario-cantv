@@ -1,0 +1,49 @@
+{% extends 'gestion_activos/base.html' %}
+
+{% block title %}Mis Activos Asignados{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Mis Activos Asignados</h1>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Listado de mis activos</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Ubicación</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activo in activos %}
+                        <tr>
+                            <td>{{ activo.codigo }}</td>
+                            <td>{{ activo.nombre }}</td>
+                            <td>{{ activo.categoria.nombre|default:"N/A" }}</td>
+                            <td>{{ activo.ubicacion.nombre|default:"N/A" }}</td>
+                            <td>{{ activo.get_estado_display }}</td>
+                            <td>
+                                <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-warning btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
