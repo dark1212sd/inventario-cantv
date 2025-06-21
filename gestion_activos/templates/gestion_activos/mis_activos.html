@@ -3,25 +3,21 @@
 {% block title %}Mi Dashboard{% endblock %}
 
 {% block content %}
-<div class="usuario-header">
-    <h1>Mi Dashboard de Activos</h1>
-    <p class="lead text-muted">Bienvenido, {{ user.username }}. Aquí puedes ver y gestionar los equipos a tu cargo.</p>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Mi Dashboard de Activos</h1>
 </div>
+<p class="lead text-muted">Bienvenido, {{ user.username }}. Aquí puedes ver y gestionar los equipos a tu cargo.</p>
 
 {% if messages %}
-    <div class="row justify-content-center mb-4">
-        <div class="col-md-8">
-            {% for message in messages %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+    {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    </div>
+    {% endfor %}
 {% endif %}
 
-<div class="asset-cards-container">
+<div class="asset-cards-container mt-4">
     {% for activo in activos %}
         <div class="asset-card">
             <div class="asset-card-body">
@@ -51,7 +47,7 @@
                     <form action="{% url 'solicitar_mantenimiento' activo.pk %}" method="POST" class="ms-auto" onsubmit="return confirm('¿Estás seguro de que quieres reportar una falla para este activo?');">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-danger" title="Reportar Falla">
-                            <i class="fas fa-wrench"></i> Reportar Falla
+                            <i class="fas fa-wrench"></i>
                         </button>
                     </form>
                 {% endif %}
@@ -66,11 +62,5 @@
             </div>
         </div>
     {% endfor %}
-</div>
-
-<div class="text-center mt-5">
-    <a href="{% url 'logout' %}" class="btn btn-secondary">
-        <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
-    </a>
 </div>
 {% endblock %}
