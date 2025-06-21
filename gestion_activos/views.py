@@ -556,3 +556,42 @@ def solicitar_mantenimiento(request, pk):
 
     # Redirigimos siempre a la lista de "Mis Activos"
     return redirect('mis_activos')
+
+
+@login_required
+@grupo_requerido('Usuario')
+def ver_perfil(request):
+    """
+    Muestra la página de perfil del usuario y maneja el cambio de contraseña.
+    """
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, '¡Tu contraseña ha sido actualizada correctamente!')
+            return redirect('ver_perfil')
+        else:
+            messages.error(request, 'Por favor, corrige los errores a continuación.')
+    else:
+        # Si se accede con GET, mostramos un formulario vacío
+        form = PasswordChangeForm(request.user)
+
+    return render(request, 'gestion_activos/perfil.html', {'form': form})
+
+
+@login_required
+@grupo_requerido('Usuario')
+def historial_activo(request, pk):
+    activo = get_object_or_404(Activo, pk=pk, responsable=request.user)
+    content_type = ContentType.objects.get_for_model(Activo)
+    logs = LogAccion.objects.filter(
+        content_type=content_type,
+        object_id=activo.id
+    ).order_by('-timestamp')
+
+    context = {
+        'activo': activo,
+        'logs': logs
+    }
+    return render(request, 'gestion_activos/historial_activo.html', context)

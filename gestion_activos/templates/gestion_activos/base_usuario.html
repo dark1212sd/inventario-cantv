@@ -109,7 +109,6 @@
         <div class="sidebar-header">
             <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/logo_menu_xsf9gl.png" alt="Logo">
         </div>
-
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'mis_activos' %}active{% endif %}" href="{% url 'mis_activos' %}">
@@ -118,10 +117,16 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link {% if request.resolver_match.url_name == 'ver_perfil' %}active{% endif %}" href="{% url 'ver_perfil' %}">
                     <i class="fas fa-user-circle icon"></i>
-                    <span>Mi Perfil (Próximamente)</span>
+                    <span>Mi Perfil</span>
                 </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'historial_activo' activo.pk %}" class="btn btn-info btn-sm" title="Ver Historial">
+                    <i class="fas fa-history"></i>
+                </a>
+                <spam>Historial</spam>
             </li>
         </ul>
 

@@ -41,5 +41,7 @@ urlpatterns = [
     path('bitacora/', views.vista_bitacora, name='vista_bitacora'),
     # --- Usuario ---
     path('mis-activos/', views.mis_activos, name='mis_activos'),
+    path('mis-activos/historial/<int:pk>/', views.historial_activo, name='historial_activo'),
     path('activos/solicitar-mantenimiento/<int:pk>/', views.solicitar_mantenimiento, name='solicitar_mantenimiento'),
+    path('mi-perfil/', views.ver_perfil, name='ver_perfil'),
 ]
