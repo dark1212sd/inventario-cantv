@@ -39,6 +39,7 @@ urlpatterns = [
 
     # --- Bitacora ---
     path('bitacora/', views.vista_bitacora, name='vista_bitacora'),
-    # --- Activos ---
+    # --- Usuario ---
     path('mis-activos/', views.mis_activos, name='mis_activos'),
+    path('activos/solicitar-mantenimiento/<int:pk>/', views.solicitar_mantenimiento, name='solicitar_mantenimiento'),
 ]

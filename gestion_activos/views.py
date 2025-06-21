@@ -528,3 +528,31 @@ def contacto(request):
         return redirect('lista_activos')  # O a una página de 'gracias'
 
     return render(request, 'gestion_activos/contacto.html')
+
+@login_required
+@grupo_requerido('Usuario')  # Solo los usuarios pueden solicitar mantenimiento para sus activos
+def solicitar_mantenimiento(request, pk):
+    """
+    Permite a un usuario cambiar el estado de su propio activo a 'En mantenimiento'.
+    """
+    # Obtenemos el activo y nos aseguramos de que le pertenezca al usuario
+    activo = get_object_or_404(Activo, pk=pk, responsable=request.user)
+
+    if request.method == 'POST':
+        # Cambiamos el estado del activo
+        activo.estado = 'en_mantenimiento'
+        activo.save()
+
+        # Registramos la acción en la bitácora
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_ACTUALIZACION,
+            content_type=ContentType.objects.get_for_model(activo),
+            object_id=activo.id,
+            detalles=f'El usuario solicitó mantenimiento para el activo: {activo.nombre}'
+        )
+
+        messages.success(request, f'Se ha reportado la solicitud de mantenimiento para el activo "{activo.nombre}".')
+
+    # Redirigimos siempre a la lista de "Mis Activos"
+    return redirect('mis_activos')
