@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.db.models import Q
+from django.contrib.auth.forms import PasswordChangeForm
 
 # Librerías de terceros
 import openpyxl
