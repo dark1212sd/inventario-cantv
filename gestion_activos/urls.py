@@ -43,5 +43,6 @@ urlpatterns = [
     path('mis-activos/', views.mis_activos, name='mis_activos'),
     path('mis-activos/historial/<int:pk>/', views.historial_activo, name='historial_activo'),
     path('activos/solicitar-mantenimiento/<int:pk>/', views.solicitar_mantenimiento, name='solicitar_mantenimiento'),
+    path('mis-activos/editar/<int:pk>/', views.editar_mi_activo, name='editar_mi_activo'),
     path('mi-perfil/', views.ver_perfil, name='ver_perfil'),
 ]

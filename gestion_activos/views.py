@@ -29,11 +29,14 @@ from .utils.decoradores import grupo_requerido
 # --- Vistas de Autenticación y Permisos ---
 
 def login_view(request):
-    """Maneja el inicio de sesión del usuario y lo redirige según su rol."""
     if request.user.is_authenticated:
-        if request.user.groups.filter(name='Usuario').exists():
+        # Lógica de redirección para usuarios ya logueados
+        if request.user.is_superuser or request.user.is_staff:
+            return redirect('lista_activos')
+        elif request.user.groups.filter(name='Usuario').exists():
             return redirect('mis_activos')
         else:
+            # Fallback para otros posibles roles
             return redirect('lista_activos')
 
     if request.method == 'POST':
@@ -42,12 +45,18 @@ def login_view(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
+
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Bienvenido de nuevo, {user.username}!')
-                if request.user.groups.filter(name='Usuario').exists():
+
+                # --- LÓGICA DE REDIRECCIÓN REFORZADA ---
+                if user.is_superuser or user.is_staff:
+                    return redirect('lista_activos')
+                elif user.groups.filter(name='Usuario').exists():
                     return redirect('mis_activos')
                 else:
+                    # Si un usuario no es admin ni "Usuario", lo mandamos a la vista general.
                     return redirect('lista_activos')
             else:
                 messages.error(request, 'Usuario o contraseña incorrectos.')
@@ -66,7 +75,6 @@ def logout_view(request):
 
 @login_required
 def sin_permisos(request):
-    """Página que se muestra cuando un usuario no tiene permisos."""
     return render(request, 'gestion_activos/sin_permisos.html')
 
 
@@ -595,3 +603,32 @@ def historial_activo(request, pk):
         'logs': logs
     }
     return render(request, 'gestion_activos/historial_activo.html', context)
+
+
+@login_required
+@grupo_requerido('Usuario')  # Solo usuarios pueden acceder
+def editar_mi_activo(request, pk):
+    """
+    Vista dedicada para que un usuario edite uno de sus propios activos.
+    """
+    # get_object_or_404 asegura que el activo exista Y que pertenezca al usuario logueado.
+    activo = get_object_or_404(Activo, pk=pk, responsable=request.user)
+
+    if request.method == 'POST':
+        # Siempre usamos el formulario restringido para usuarios.
+        form = UsuarioActivoForm(request.POST, instance=activo)
+        if form.is_valid():
+            activo_actualizado = form.save()
+            detalles = f'El usuario actualizó su activo: {activo_actualizado.nombre}'
+            # ... (Lógica de bitácora) ...
+            messages.success(request, 'Activo actualizado correctamente.')
+            return redirect('mis_activos')  # Siempre redirige a su dashboard.
+    else:
+        form = UsuarioActivoForm(instance=activo)
+
+    context = {
+        'form': form,
+        'titulo': f'Editar Mi Activo: {activo.nombre}',
+        'activo': activo
+    }
+    return render(request, 'gestion_activos/editar_mi_activo.html', context)
