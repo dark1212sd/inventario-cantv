@@ -12,11 +12,12 @@
 
     <style>
         :root {
-            --sidebar-width: 240px;
-            --sidebar-bg-color: #2c3e50; /* Un azul oscuro elegante */
+            --sidebar-width: 250px;
+            /* Usamos un color RGBA para la transparencia. 0.9 es 90% opaco */
+            --sidebar-bg-color: rgba(44, 62, 80, 0.9);
             --sidebar-link-color: rgba(255, 255, 255, 0.8);
             --sidebar-link-hover-color: #ffffff;
-            --sidebar-link-hover-bg: #34495e;
+            --sidebar-link-hover-bg: rgba(52, 73, 94, 0.95);
             --page-bg-color: #f8f9fc;
         }
 
@@ -24,80 +25,71 @@
             background-color: var(--page-bg-color);
             font-family: 'Nunito', sans-serif;
             color: #5a5c69;
+            overflow-x: hidden; /* Evita el scroll horizontal cuando la barra se oculta */
         }
 
+        /* --- Estilos de la Barra Lateral --- */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
             position: fixed;
             top: 0;
-            left: 0;
+            right: 0; /* <--- CAMBIO: Ahora está a la derecha */
             background-color: var(--sidebar-bg-color);
+            backdrop-filter: blur(5px); /* Efecto de desenfoque para el fondo (opcional, muy moderno) */
             padding-top: 1rem;
-            transition: all 0.3s;
+            transition: transform 0.3s ease-in-out; /* Animación suave */
+            z-index: 1030;
         }
 
-        .sidebar-header {
-            padding: 1.5rem;
-            text-align: center;
-            margin-bottom: 1rem;
+        /* Estado colapsado: la barra se mueve fuera de la pantalla a la derecha */
+        .sidebar.collapsed {
+            transform: translateX(100%);
         }
 
-        .sidebar-header img {
-            max-width: 100px;
-        }
+        .sidebar-header { padding: 1.5rem; text-align: center; margin-bottom: 1rem; }
+        .sidebar-header img { max-width: 100px; }
+        .sidebar .nav-link { color: var(--sidebar-link-color); padding: 0.75rem 1.5rem; display: flex; align-items: center; font-weight: 600; border-left: 3px solid transparent; transition: all 0.2s ease-in-out; }
+        .sidebar .nav-link .icon { width: 20px; margin-right: 1rem; text-align: center; }
+        .sidebar .nav-link:hover { background-color: var(--sidebar-link-hover-bg); color: var(--sidebar-link-hover-color); }
+        .sidebar .nav-link.active { color: #ffffff; border-left-color: #4e73df; }
+        .sidebar-footer { position: absolute; bottom: 0; width: 100%; }
 
-        .sidebar .nav-link {
-            color: var(--sidebar-link-color);
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            align-items: center;
-            font-weight: 600;
-            border-left: 3px solid transparent;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .sidebar .nav-link .icon {
-            width: 20px;
-            margin-right: 1rem;
-            text-align: center;
-        }
-
-        .sidebar .nav-link:hover {
-            background-color: var(--sidebar-link-hover-bg);
-            color: var(--sidebar-link-hover-color);
-        }
-
-        .sidebar .nav-link.active {
-            color: #ffffff;
-            border-left-color: #4e73df;
-        }
-
-        .sidebar-footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
-
+        /* --- Estilos del Contenido Principal --- */
         .content-wrapper {
-            margin-left: var(--sidebar-width);
+            /* El margen ahora está a la derecha para dejar espacio a la barra */
+            margin-right: var(--sidebar-width);
             padding: 2rem;
-            transition: margin-left 0.3s;
+            transition: margin-right 0.3s ease-in-out;
         }
 
-        /* Estilos de las tarjetas (los mantenemos) */
-        .asset-cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
+        /* Cuando la barra está colapsada, el contenido ocupa toda la pantalla */
+        .content-wrapper.full-width {
+            margin-right: 0;
         }
-        .asset-card {
-            background-color: #fff;
-            border-radius: 0.5rem;
-            border: 1px solid #e3e6f0;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+
+        /* --- Estilos del Botón para Ocultar/Mostrar --- */
+        #sidebarToggle {
+            position: fixed;
+            top: 15px;
+            right: 15px; /* Lo posicionamos arriba a la derecha */
+            z-index: 1031; /* Debe estar por encima de la barra lateral */
+            background-color: #4e73df;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
         }
-        .asset-card-body { padding: 1.25rem; }
+
+        /* --- Estilos de las tarjetas (sin cambios) --- */
+        .asset-cards-container, .asset-card, .asset-card-body, .asset-card-header, .status-badge, .asset-card-footer, .empty-state-card {
+             /* Estos estilos se mantienen igual que antes */
+        }
+        .asset-cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+        .asset-card { background-color: #fff; border-radius: 0.5rem; border: 1px solid #e3e6f0; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); display: flex; flex-direction: column; }
+        .asset-card-body { padding: 1.25rem; flex-grow: 1; }
         .asset-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
         .asset-card-header h5 { margin-bottom: 0; font-weight: 700; color: #4e73df; }
         .status-badge { font-size: 0.75em; font-weight: 700; padding: 0.35em 0.65em; }
@@ -109,7 +101,11 @@
 </head>
 <body>
 
-    <nav class="sidebar">
+    <button id="sidebarToggle" class="btn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/logo_menu_xsf9gl.png" alt="Logo">
         </div>
@@ -122,7 +118,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'historial_activo' %}active{% endif %}" href="#">
+                <a class="nav-link" href="#">
                     <i class="fas fa-user-circle icon"></i>
                     <span>Mi Perfil (Próximamente)</span>
                 </a>
@@ -141,10 +137,50 @@
         </div>
     </nav>
 
-    <main class="content-wrapper">
+    <main class="content-wrapper" id="main-content">
         {% block content %}{% endblock %}
     </main>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleButton = document.getElementById('sidebarToggle');
+            const icon = toggleButton.querySelector('i');
+
+            // Función para actualizar el ícono del botón
+            function updateIcon() {
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                } else {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                }
+            }
+
+            // Función para manejar el toggle
+            function handleToggle() {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('full-width');
+                // Guardar el estado en localStorage para recordarlo en futuras visitas
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                updateIcon();
+            }
+
+            // Evento de clic para el botón
+            toggleButton.addEventListener('click', handleToggle);
+
+            // Comprobar el estado guardado al cargar la página
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('full-width');
+            }
+
+            // Actualizar el ícono al cargar la página
+            updateIcon();
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
