@@ -567,28 +567,27 @@ def solicitar_mantenimiento(request, pk):
     # Redirigimos siempre a la lista de "Mis Activos"
     return redirect('mis_activos')
 
-
 @login_required
-@grupo_requerido('Usuario')
 def ver_perfil(request):
     """
-    Muestra la página de perfil del usuario y maneja el cambio de contraseña.
+    Muestra la página de perfil del usuario (solo lectura) y permite cambiar la contraseña.
     """
     if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
+        password_form = PasswordChangeForm(request.user, request.POST)
+        if password_form.is_valid():
+            user = password_form.save()
             update_session_auth_hash(request, user)
             messages.success(request, '¡Tu contraseña ha sido actualizada correctamente!')
             return redirect('ver_perfil')
         else:
-            messages.error(request, 'Por favor, corrige los errores a continuación.')
+            messages.error(request, 'Error al cambiar la contraseña. Por favor, corrige los errores.')
     else:
-        # Si se accede con GET, mostramos un formulario vacío
-        form = PasswordChangeForm(request.user)
+        password_form = PasswordChangeForm(request.user)
 
-    return render(request, 'gestion_activos/perfil.html', {'form': form})
-
+    context = {
+        'password_form': password_form,
+    }
+    return render(request, 'gestion_activos/perfil.html', context)
 
 @login_required
 @grupo_requerido('Usuario')
@@ -669,3 +668,25 @@ def ver_perfil(request):
         'password_form': password_form,
     }
     return render(request, 'gestion_activos/perfil.html', context)
+
+@login_required
+def completar_perfil(request):
+    """
+    Vista para forzar al usuario a completar su información personal una sola vez.
+    """
+    # Si el perfil ya está confirmado, no debería estar aquí. Lo redirigimos.
+    if request.user.perfil.info_personal_confirmada:
+        return redirect('mis_activos')
+
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, instance=request.user.perfil)
+        if form.is_valid():
+            perfil = form.save(commit=False)
+            perfil.info_personal_confirmada = True # Marcamos la bandera
+            perfil.save()
+            messages.success(request, '¡Gracias por completar tu perfil! Ya puedes usar el sistema.')
+            return redirect('mis_activos') # <-- Redirección corregida
+    else:
+        form = PerfilForm(instance=request.user.perfil)
+
+    return render(request, 'gestion_activos/completar_perfil.html', {'form': form})

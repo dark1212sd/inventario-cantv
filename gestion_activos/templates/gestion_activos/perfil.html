@@ -1,5 +1,5 @@
-{% extends 'gestion_activos/base_usuario.html' %}
-
+{% extends 'gestion_activos/base_usuario.h
+tml' %}
 {% block title %}Mi Perfil{% endblock %}
 
 {% block content %}
@@ -17,71 +17,26 @@
 {% endif %}
 
 <div class="row">
-    <div class="col-lg-7">
+    <div class="col-lg-5">
         <div class="card shadow-sm mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 fw-bold text-primary">Información Personal</h6>
-            </div>
+            <div class="card-header py-3"><h6 class="m-0 fw-bold text-primary">Información Personal</h6></div>
             <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Nombres</label>
-                            {{ perfil_form.nombres }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Apellidos</label>
-                            {{ perfil_form.apellidos }}
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Cédula de Identidad (CI)</label>
-                        {{ perfil_form.ci }}
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Teléfono de Contacto</label>
-                            {{ perfil_form.telefono_contacto }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Teléfono Alterno</label>
-                            {{ perfil_form.telefono_alterno }}
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Fecha de Nacimiento</label>
-                        {{ perfil_form.fecha_nacimiento }}
-                    </div>
-                    <hr>
-                    <button type="submit" name="update_profile" class="btn btn-primary">Guardar Información</button>
-                </form>
+                <p><strong>Nombres:</strong> {{ user.perfil.nombres }}</p>
+                <p><strong>Apellidos:</strong> {{ user.perfil.apellidos }}</p>
+                <p><strong>Cédula:</strong> {{ user.perfil.ci }}</p>
+                <p><strong>Teléfono:</strong> {{ user.perfil.telefono_contacto }}</p>
             </div>
         </div>
     </div>
-
-    <div class="col-lg-5">
+    <div class="col-lg-7">
         <div class="card shadow-sm">
-            <div class="card-header py-3">
-                <h6 class="m-0 fw-bold text-primary">Cambiar Contraseña</h6>
-            </div>
+            <div class="card-header py-3"><h6 class="m-0 fw-bold text-primary">Cambiar Contraseña</h6></div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Contraseña Actual</label>
-                        {{ password_form.old_password }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nueva Contraseña</label>
-                        {{ password_form.new_password1 }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Confirmar Nueva Contraseña</label>
-                        {{ password_form.new_password2 }}
-                    </div>
+                    {{ password_form.as_p }}
                     <hr>
-                    <button type="submit" name="change_password" class="btn btn-secondary">Actualizar Contraseña</button>
+                    <button type="submit" class="btn btn-secondary">Actualizar Contraseña</button>
                 </form>
             </div>
         </div>

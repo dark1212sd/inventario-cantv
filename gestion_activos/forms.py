@@ -1,7 +1,8 @@
 from django import forms
 from .models import Activo, Categoria, Ubicacion
 from django.contrib.auth.models import User, Group
-from .models import Perfil # Asegúrate de importar el modelo Perfil
+from .models import Perfil
+import re
 
 class ActivoForm(forms.ModelForm):
     responsable = forms.ModelChoiceField(
@@ -118,18 +119,33 @@ class LoginForm(forms.Form):
         })
     )
 
+
 class PerfilForm(forms.ModelForm):
     class Meta:
         model = Perfil
         fields = ['nombres', 'apellidos', 'ci', 'telefono_contacto', 'telefono_alterno', 'fecha_nacimiento']
-        # Añadimos widgets solo para los que queremos personalizar
         widgets = {
             'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Bucle para añadir la clase 'form-control' a todos los campos
         for field_name, field in self.fields.items():
-            if not isinstance(field.widget, forms.DateInput):
-                field.widget.attrs['class'] = 'form-control'
+            field.widget.attrs.update({'class': 'form-control', 'placeholder': f'Ingrese su {field.label.lower()}'})
+
+    # --- NUEVA FUNCIÓN DE VALIDACIÓN ---
+    def clean_telefono_contacto(self):
+        telefono = self.cleaned_data.get('telefono_contacto')
+        if telefono:
+            # Elimina espacios o guiones
+            telefono_limpio = re.sub(r'\D', '', telefono)
+
+            # Patrón para prefijos válidos y longitud total de 11 dígitos
+            patron = re.compile(r'^(0412|0414|0424|0416|0426)\d{7}$')
+
+            if not patron.match(telefono_limpio):
+                raise forms.ValidationError(
+                    "Por favor, ingrese un número de teléfono venezolano válido (ej: 04141234567).")
+
+            return telefono_limpio
+        return telefono
