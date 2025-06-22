@@ -30,6 +30,28 @@ from .utils.decoradores import grupo_requerido
 
 # --- Vistas de Autenticación y Permisos ---
 
+
+@login_required
+def index_view(request):
+    """
+    Vista de índice que redirige a los usuarios ya logueados a su
+    dashboard correspondiente al visitar la ruta raíz.
+    Esta versión tiene una lógica de roles reforzada.
+    """
+    user = request.user
+
+    # Prioridad 1: Superusuarios y todo el personal administrativo/técnico.
+    # El flag 'is_staff' es la forma ideal de agrupar a todos estos roles.
+    if user.is_superuser or user.is_staff:
+        return redirect('lista_activos')
+
+    elif user.groups.filter(name='Usuario').exists():
+        return redirect('mis_activos')
+
+    else:
+        return redirect('mis_activos')
+
+
 def login_view(request):
     if request.user.is_authenticated:
         # Lógica de redirección para usuarios ya logueados

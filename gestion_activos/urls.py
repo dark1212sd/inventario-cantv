@@ -4,6 +4,8 @@ from . import views
 from gestion_activos.views import lista_usuarios, crear_usuario
 
 urlpatterns = [
+    # --- RUTA PRINCIPAL (NUEVO) ---
+    path('', views.index_view, name='index'),
     # --- Autenticación ---
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
