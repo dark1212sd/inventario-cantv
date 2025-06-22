@@ -150,14 +150,9 @@ EMAIL_USE_TLS = True
 # ==============================================================================
 # CONFIGURACIÓN DE SEGURIDAD CON AXES
 # ==============================================================================
-
 AXES_FAILURE_LIMIT = 5
-
 AXES_COOLOFF_TIME = datetime.timedelta(minutes=5)
-
 AXES_USERNAME_FORM_FIELD = "username"
-
 AXES_RESET_ON_SUCCESS = True
-
 # Opcional: Si quieres una página de bloqueo personalizada.
 # AXES_LOCKOUT_TEMPLATE = 'lockout.html'
