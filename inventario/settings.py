@@ -45,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'gestion_activos.middleware.ProfileCompletionMiddleware',
 ]
 
 ROOT_URLCONF = 'inventario.urls'

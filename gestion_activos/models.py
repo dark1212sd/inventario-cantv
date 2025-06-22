@@ -92,12 +92,18 @@ class LogAccion(models.Model):
 class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
 
-    nombres = models.CharField(max_length=100, blank=True)
-    apellidos = models.CharField(max_length=100, blank=True)
-    ci = models.CharField("Cédula de Identidad", max_length=20, unique=True, null=True, blank=True)
-    telefono_contacto = models.CharField("Teléfono de Contacto", max_length=20, blank=True)
+    # --- CAMPOS MODIFICADOS (AHORA OBLIGATORIOS) ---
+    nombres = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=100)
+    ci = models.CharField("Cédula de Identidad", max_length=20, unique=True, null=True)  # Lo dejamos nullable por si acaso
+    telefono_contacto = models.CharField("Teléfono de Contacto", max_length=20)
+
+    # --- CAMPOS QUE SIGUEN SIENDO OPCIONALES ---
     telefono_alterno = models.CharField("Teléfono Alterno", max_length=20, blank=True)
     fecha_nacimiento = models.DateField("Fecha de Nacimiento", null=True, blank=True)
+
+    # La bandera que ya teníamos es la clave para esta lógica
+    info_personal_confirmada = models.BooleanField(default=False)
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
