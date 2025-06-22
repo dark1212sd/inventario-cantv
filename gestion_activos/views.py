@@ -51,44 +51,63 @@ def index_view(request):
     else:
         return redirect('mis_activos')
 
-
 def login_view(request):
+    """
+    Maneja el inicio de sesión del usuario con lógica reforzada y mensajes
+    detallados de intentos fallidos.
+    """
+    # La lógica para usuarios ya logueados se queda igual
     if request.user.is_authenticated:
-        # Lógica de redirección para usuarios ya logueados
         if request.user.is_superuser or request.user.is_staff:
             return redirect('lista_activos')
         elif request.user.groups.filter(name='Usuario').exists():
             return redirect('mis_activos')
         else:
-            # Fallback para otros posibles roles
-            return redirect('lista_activos')
+            return redirect('mis_activos')
 
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
 
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Bienvenido de nuevo, {user.username}!')
-
-                # --- LÓGICA DE REDIRECCIÓN REFORZADA ---
+                # La lógica de redirección por rol se queda igual
                 if user.is_superuser or user.is_staff:
                     return redirect('lista_activos')
                 elif user.groups.filter(name='Usuario').exists():
                     return redirect('mis_activos')
                 else:
-                    # Si un usuario no es admin ni "Usuario", lo mandamos a la vista general.
                     return redirect('lista_activos')
             else:
-                messages.error(request, 'Usuario o contraseña incorrectos.')
+                # --- NUEVA LÓGICA DE MENSAJE DE ERROR ---
+                # Obtenemos los intentos fallidos para este intento de login
+                attempts = get_user_attempts(request)
+
+                # Obtenemos el límite de fallos desde settings, con 5 como valor por defecto
+                failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
+
+                if attempts:
+                    intentos_realizados = attempts.count()
+                    intentos_restantes = failure_limit - intentos_realizados
+
+                    if intentos_restantes > 0:
+                        message = f"Usuario o contraseña incorrectos. Te quedan {intentos_restantes} intento(s)."
+                    else:
+                        # Este mensaje se mostrará justo antes del bloqueo final
+                        message = "Has excedido el límite de intentos. Tu cuenta será bloqueada."
+                else:
+                    message = "Usuario o contraseña incorrectos."
+
+                messages.error(request, message)
+
     else:
         form = LoginForm()
 
     return render(request, 'gestion_activos/login.html', {'form': form})
-
 
 def logout_view(request):
     """Cierra la sesión del usuario."""
