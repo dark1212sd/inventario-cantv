@@ -2,6 +2,7 @@
 from django.db.models.signals import post_migrate
 from django.contrib.auth.models import Group, Permission
 from django.dispatch import receiver
+from .models import Perfil
 
 @receiver(post_migrate)
 def crear_roles(sender, **kwargs):
@@ -19,3 +20,12 @@ def crear_roles(sender, **kwargs):
         grupo, creado = Group.objects.get_or_create(name=nombre_rol)
         grupo.permissions.set(permisos)
         grupo.save()
+
+@receiver(post_save, sender=User)
+def crear_o_actualizar_perfil_usuario(sender, instance, created, **kwargs):
+    """
+    Crea un perfil para cada nuevo usuario o guarda el perfil existente.
+    """
+    if created:
+        Perfil.objects.create(user=instance)
+    instance.perfil.save()

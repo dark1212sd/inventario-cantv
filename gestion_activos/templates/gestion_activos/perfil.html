@@ -14,10 +14,12 @@
                 <h6 class="m-0 font-weight-bold text-primary">Información de la Cuenta</h6>
             </div>
             <div class="card-body">
-                <h5 class="card-title">{{ user.username }}</h5>
+                <h5 class="card-title">{{ user.perfil.nombres }} {{ user.perfil.apellidos }}</h5>
                 <p class="card-text">
-                    <strong>Nombre de usuario:</strong> {{ user.username }}<br>
-                    <strong>Correo electrónico:</strong> {{ user.email }}<br>
+                    <strong>Usuario:</strong> {{ user.username }}<br>
+                    <strong>Correo:</strong> {{ user.email }}<br>
+                    <strong>Cédula:</strong> {{ user.perfil.ci|default:"No especificado" }}<br>
+                    <strong>Teléfono:</strong> {{ user.perfil.telefono_contacto|default:"No especificado" }}<br>
                     <strong>Rol:</strong>
                     {% for group in user.groups.all %}
                         {{ group.name }}{% if not forloop.last %}, {% endif %}

@@ -32,22 +32,58 @@ class UbicacionForm(forms.ModelForm):
 
 
 class UsuarioForm(forms.ModelForm):
+    # Campos del modelo User
+    username = forms.CharField(label="Nombre de Usuario", required=True)
+    email = forms.EmailField(label="Correo Electrónico", required=False)
     grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
+
+    # Nuevos campos del modelo Perfil
+    nombres = forms.CharField(label="Nombres", required=False)
+    apellidos = forms.CharField(label="Apellidos", required=False)
+    ci = forms.CharField(label="Cédula (CI)", required=False)
+    telefono_contacto = forms.CharField(label="Teléfono Principal", required=False)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'grupo']
-        widgets = {
-            'password': forms.PasswordInput(),
-        }
+        fields = ['username', 'email', 'grupo', 'nombres', 'apellidos', 'ci', 'telefono_contacto']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            # Si estamos editando, poblamos los campos del perfil
+            self.fields['grupo'].initial = self.instance.groups.first()
+            if hasattr(self.instance, 'perfil'):
+                self.fields['nombres'].initial = self.instance.perfil.nombres
+                self.fields['apellidos'].initial = self.instance.perfil.apellidos
+                self.fields['ci'].initial = self.instance.perfil.ci
+                self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
+
+            # Hacemos el username de solo lectura al editar
+            self.fields['username'].widget.attrs['readonly'] = True
 
     def save(self, commit=True):
+        # Guardamos el objeto User
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data['password'])
+
+        # Si es un usuario nuevo, establecemos una contraseña por defecto (ej: la cédula)
+        if not self.instance.pk:
+            password = self.cleaned_data.get('ci', 'password123')  # Usamos la cédula o un password por defecto
+            user.set_password(password)
+
         if commit:
             user.save()
+
+            # Asignamos el grupo
             user.groups.clear()
             user.groups.add(self.cleaned_data['grupo'])
+
+            # Guardamos los datos del Perfil
+            user.perfil.nombres = self.cleaned_data['nombres']
+            user.perfil.apellidos = self.cleaned_data['apellidos']
+            user.perfil.ci = self.cleaned_data['ci']
+            user.perfil.telefono_contacto = self.cleaned_data['telefono_contacto']
+            user.perfil.save()
+
         return user
 
 
