@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import dj_database_url
 from decouple import config, Csv
+import datetime
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gestion_activos',
+    'axes',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -44,6 +47,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'gestion_activos.middleware.ProfileCompletionMiddleware',
 ]
@@ -94,6 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # AUTENTICACIÓN
 # ==============================================================================
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
@@ -141,3 +146,18 @@ ANYMAIL = {
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='no-reply@tuproyecto.com')
 EMAIL_CONTACTO = config('EMAIL_CONTACTO', default=DEFAULT_FROM_EMAIL)
 EMAIL_USE_TLS = True
+
+# ==============================================================================
+# CONFIGURACIÓN DE SEGURIDAD CON AXES
+# ==============================================================================
+
+AXES_FAILURE_LIMIT = 5
+
+AXES_COOLOFF_TIME = datetime.timedelta(minutes=5)
+
+AXES_USERNAME_FORM_FIELD = "username"
+
+AXES_RESET_ON_SUCCESS = True
+
+# Opcional: Si quieres una página de bloqueo personalizada.
+# AXES_LOCKOUT_TEMPLATE = 'lockout.html'
