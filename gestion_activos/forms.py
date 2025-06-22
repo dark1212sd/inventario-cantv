@@ -1,7 +1,7 @@
 from django import forms
 from .models import Activo, Categoria, Ubicacion
 from django.contrib.auth.models import User, Group
-
+from .models import Perfil # Asegúrate de importar el modelo Perfil
 
 class ActivoForm(forms.ModelForm):
     responsable = forms.ModelChoiceField(
@@ -117,3 +117,28 @@ class LoginForm(forms.Form):
             'placeholder': 'Ingrese su contraseña'
         })
     )
+
+class PerfilForm(forms.ModelForm):
+    """
+    Formulario para que los usuarios editen su propia información de perfil.
+    """
+    class Meta:
+        model = Perfil
+        # Excluimos el campo 'user' porque se establece automáticamente
+        fields = [
+            'nombres',
+            'apellidos',
+            'ci',
+            'telefono_contacto',
+            'telefono_alterno',
+            'fecha_nacimiento'
+        ]
+        widgets = {
+            'nombres': forms.TextInput(attrs={'class': 'form-control'}),
+            'apellidos': forms.TextInput(attrs={'class': 'form-control'}),
+            'ci': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono_contacto': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono_alterno': forms.TextInput(attrs={'class': 'form-control'}),
+            # Usamos un widget de tipo 'date' para un selector de fecha nativo del navegador
+            'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }

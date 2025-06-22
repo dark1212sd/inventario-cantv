@@ -7,70 +7,81 @@
     <h1 class="h2">Mi Perfil</h1>
 </div>
 
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
 <div class="row">
-    <div class="col-lg-4">
+    <div class="col-lg-7">
         <div class="card shadow-sm mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Información de la Cuenta</h6>
+                <h6 class="m-0 fw-bold text-primary">Información Personal</h6>
             </div>
             <div class="card-body">
-                <h5 class="card-title">{{ user.perfil.nombres }} {{ user.perfil.apellidos }}</h5>
-                <p class="card-text">
-                    <strong>Usuario:</strong> {{ user.username }}<br>
-                    <strong>Correo:</strong> {{ user.email }}<br>
-                    <strong>Cédula:</strong> {{ user.perfil.ci|default:"No especificado" }}<br>
-                    <strong>Teléfono:</strong> {{ user.perfil.telefono_contacto|default:"No especificado" }}<br>
-                    <strong>Rol:</strong>
-                    {% for group in user.groups.all %}
-                        {{ group.name }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombres</label>
+                            {{ perfil_form.nombres }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Apellidos</label>
+                            {{ perfil_form.apellidos }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cédula de Identidad (CI)</label>
+                        {{ perfil_form.ci }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono de Contacto</label>
+                            {{ perfil_form.telefono_contacto }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono Alterno</label>
+                            {{ perfil_form.telefono_alterno }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        {{ perfil_form.fecha_nacimiento }}
+                    </div>
+                    <hr>
+                    <button type="submit" name="update_profile" class="btn btn-primary">Guardar Información</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-8">
+    <div class="col-lg-5">
         <div class="card shadow-sm">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Cambiar Contraseña</h6>
+                <h6 class="m-0 fw-bold text-primary">Cambiar Contraseña</h6>
             </div>
             <div class="card-body">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
                 <form method="post">
                     {% csrf_token %}
-
                     <div class="mb-3">
-                        <label for="{{ form.old_password.id_for_label }}" class="form-label">Contraseña Actual</label>
-                        {{ form.old_password }}
-                        {% if form.old_password.errors %}
-                            <div class="text-danger small mt-1">{{ form.old_password.errors.as_text }}</div>
-                        {% endif %}
+                        <label class="form-label">Contraseña Actual</label>
+                        {{ password_form.old_password }}
                     </div>
-
                     <div class="mb-3">
-                        <label for="{{ form.new_password1.id_for_label }}" class="form-label">Nueva Contraseña</label>
-                        {{ form.new_password1 }}
-                        {% if form.new_password1.errors %}
-                             <div class="text-danger small mt-1">{{ form.new_password1.errors.as_text }}</div>
-                        {% endif %}
+                        <label class="form-label">Nueva Contraseña</label>
+                        {{ password_form.new_password1 }}
                     </div>
-
                     <div class="mb-3">
-                        <label for="{{ form.new_password2.id_for_label }}" class="form-label">Confirmar Nueva Contraseña</label>
-                        {{ form.new_password2 }}
-                        {% if form.new_password2.errors %}
-                             <div class="text-danger small mt-1">{{ form.new_password2.errors.as_text }}</div>
-                        {% endif %}
+                        <label class="form-label">Confirmar Nueva Contraseña</label>
+                        {{ password_form.new_password2 }}
                     </div>
-
-                    <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+                    <hr>
+                    <button type="submit" name="change_password" class="btn btn-secondary">Actualizar Contraseña</button>
                 </form>
             </div>
         </div>

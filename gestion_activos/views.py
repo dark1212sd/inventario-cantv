@@ -13,6 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth.forms import PasswordChangeForm
+from .forms import PerfilForm
 
 # Librerías de terceros
 import openpyxl
@@ -633,3 +634,38 @@ def editar_mi_activo(request, pk):
         'activo': activo
     }
     return render(request, 'gestion_activos/editar_mi_activo.html', context)
+
+@login_required
+def ver_perfil(request):
+    """
+    Muestra el perfil del usuario y maneja la actualización de su
+    información personal y el cambio de su contraseña.
+    """
+    # Inicializamos ambos formularios
+    perfil_form = PerfilForm(instance=request.user.perfil)
+    password_form = PasswordChangeForm(request.user)
+
+    if request.method == 'POST':
+        # Verificamos qué botón de formulario se presionó
+        if 'update_profile' in request.POST:
+            perfil_form = PerfilForm(request.POST, instance=request.user.perfil)
+            if perfil_form.is_valid():
+                perfil_form.save()
+                messages.success(request, '¡Tu información de perfil ha sido actualizada!')
+                return redirect('ver_perfil')
+
+        elif 'change_password' in request.POST:
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, '¡Tu contraseña ha sido actualizada correctamente!')
+                return redirect('ver_perfil')
+            else:
+                messages.error(request, 'Error al cambiar la contraseña. Por favor, corrige los errores.')
+
+    context = {
+        'perfil_form': perfil_form,
+        'password_form': password_form,
+    }
+    return render(request, 'gestion_activos/perfil.html', context)
