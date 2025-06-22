@@ -633,22 +633,3 @@ def editar_mi_activo(request, pk):
         'activo': activo
     }
     return render(request, 'gestion_activos/editar_mi_activo.html', context)
-
-
-class Perfil(models.Model):
-    """
-    Modelo para extender la información del usuario por defecto de Django.
-    """
-    # Relación uno a uno: cada usuario tiene un solo perfil.
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
-
-    # Nuevos campos
-    nombres = models.CharField(max_length=100, blank=True)
-    apellidos = models.CharField(max_length=100, blank=True)
-    ci = models.CharField("Cédula de Identidad", max_length=20, unique=True, null=True, blank=True)
-    telefono_contacto = models.CharField("Teléfono de Contacto", max_length=20, blank=True)
-    telefono_alterno = models.CharField("Teléfono Alterno", max_length=20, blank=True)
-    fecha_nacimiento = models.DateField("Fecha de Nacimiento", null=True, blank=True)
-
-    def __str__(self):
-        return f'Perfil de {self.user.username}'

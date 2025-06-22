@@ -5,20 +5,21 @@ from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 
 
-
 class Categoria(models.Model):
-    nombre      = models.CharField("Categoría", max_length=100, unique=True)
+    nombre = models.CharField("Categoría", max_length=100, unique=True)
     descripcion = models.TextField("Descripción", blank=True)
 
     def __str__(self):
         return self.nombre
+
 
 class Ubicacion(models.Model):
-    nombre      = models.CharField("Ubicación", max_length=100, unique=True)
+    nombre = models.CharField("Ubicación", max_length=100, unique=True)
     descripcion = models.TextField("Descripción", blank=True)
 
     def __str__(self):
         return self.nombre
+
 
 class Activo(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
@@ -32,12 +33,12 @@ class Activo(models.Model):
         ('en_mantenimiento', 'En mantenimiento')
     ])
     fecha_registro = models.DateTimeField(auto_now_add=True)
-
-    # Nuevo campo
-    responsable = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='activos_responsables')
+    responsable = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='activos_responsables')
 
     def __str__(self):
         return f'{self.codigo} - {self.nombre}'
+
 
 class LogAccion(models.Model):
     ACCION_CREACION = 'CREACIÓN'
@@ -61,7 +62,6 @@ class LogAccion(models.Model):
         choices=ACCION_CHOICES,
         verbose_name="Acción"
     )
-    # Usamos ContentType para hacer una referencia genérica a cualquier modelo (Activo, Categoria, etc.)
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.CASCADE,
@@ -69,7 +69,6 @@ class LogAccion(models.Model):
     )
     object_id = models.PositiveIntegerField(verbose_name="ID del Objeto")
     content_object = GenericForeignKey('content_type', 'object_id')
-
     detalles = models.TextField(
         blank=True,
         null=True,
@@ -87,3 +86,18 @@ class LogAccion(models.Model):
         verbose_name = 'Registro de Acción'
         verbose_name_plural = 'Registros de Acciones'
         ordering = ['-timestamp']
+
+
+# --- NUEVO MODELO PERFIL (Añadido y con indentación correcta) ---
+class Perfil(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+
+    nombres = models.CharField(max_length=100, blank=True)
+    apellidos = models.CharField(max_length=100, blank=True)
+    ci = models.CharField("Cédula de Identidad", max_length=20, unique=True, null=True, blank=True)
+    telefono_contacto = models.CharField("Teléfono de Contacto", max_length=20, blank=True)
+    telefono_alterno = models.CharField("Teléfono Alterno", max_length=20, blank=True)
+    fecha_nacimiento = models.DateField("Fecha de Nacimiento", null=True, blank=True)
+
+    def __str__(self):
+        return f'Perfil de {self.user.username}'

@@ -1,6 +1,6 @@
 # utils/signals.py o gestion_activos/signals.py
-from django.db.models.signals import post_migrate
-from django.contrib.auth.models import Group, Permission
+from django.db.models.signals import post_migrate, post_save
+from django.contrib.auth.models import Group, Permission, User
 from django.dispatch import receiver
 from .models import Perfil
 
