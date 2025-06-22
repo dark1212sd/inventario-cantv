@@ -1,49 +1,43 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 import dj_database_url
-from decouple import config
+from decouple import config, Csv
 
-
-# 1. Carga variables de entorno desde .env
-load_dotenv()  # debe ir lo antes posible
-
-# 2. Paths base
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 3. Seguridad
-SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# ==============================================================================
+# CONFIGURACIÓN DE SEGURIDAD Y ENTORNO
+# ==============================================================================
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
 
-# 4. Apps instaladas
+# ==============================================================================
+# APLICACIONES
+# ==============================================================================
 INSTALLED_APPS = [
-    # Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Tu app
     'gestion_activos',
-
-    # allauth
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    "anymail",
+    'anymail',
 ]
 
 SITE_ID = 1
 
-# 5. Middleware (con WhiteNoise para estáticos)
+# ==============================================================================
+# MIDDLEWARE
+# =================================================_
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',           #  ← WhiteNoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -55,11 +49,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'inventario.urls'
 
-# 6. Templates (global + app dirs)
+# ==============================================================================
+# PLANTILLAS (TEMPLATES)
+# ==============================================================================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [ BASE_DIR / 'templates' ],  # tu carpeta global
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,63 +69,74 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'inventario.wsgi.application'
 
-# 7. Base de datos (puedes cambiar a Postgres en producción)
+# ==============================================================================
+# BASE DE DATOS
+# ==============================================================================
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('postgresql://inventario_cantv_db_user:78W0okyU6o5WWTgrrHFxq7iZKSmBhe5N@dpg-d0qj2s3uibrs73el76p0-a/inventario_cantv_db'),
-        conn_max_age=600,  # mantiene la conexión abierta
-        ssl_require=True   # importante para Render
+        conn_max_age=600,
+        ssl_require=config('DB_SSL_REQUIRE', default=True, cast=bool)
     )
 }
 
-# 8. Password validators
+# ==============================================================================
+# VALIDACIÓN DE CONTRASEÑAS
+# ==============================================================================
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# 9. Autenticación con allauth
+# ==============================================================================
+# AUTENTICACIÓN
+# ==============================================================================
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# 10. Internacionalización
-LANGUAGE_CODE = 'es'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
-
-# 11. Archivos estáticos y media
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'        # para collectstatic
-STATICFILES_DIRS = [BASE_DIR / 'gestion_activos' / 'static'] # tu CSS/JS local
-# activa compresión de WhiteNoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# 12. Login / logout / redirecciones
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'lista_activos'
 LOGOUT_REDIRECT_URL = 'login'
 
-# 13. Variables extra de allauth (opcional)
-ACCOUNT_LOGIN_METHODS = {'username'}
-ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
-# --- Seguridad base de datos ---
-DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+# ==============================================================================
+# INTERNACIONALIZACIÓN
+# ==============================================================================
+LANGUAGE_CODE = 'es-ve'
+TIME_ZONE = 'America/Caracas'
+USE_I18N = True
+USE_TZ = True
 
-# settings.py
+# ==============================================================================
+# ARCHIVOS ESTÁTICOS Y MEDIA
+# ==============================================================================
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# --- CORRECCIÓN DE LA ADVERTENCIA STATICFILES_DIRS ---
+# Apunta a una única carpeta 'static' en la raíz del proyecto, como habíamos acordado.
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ==============================================================================
+# CORRECCIÓN DE LA ADVERTENCIA DE CLAVE PRIMARIA (PrimaryKey)
+# ==============================================================================
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================================================================
+# CONFIGURACIÓN DE CORREO
+# ==============================================================================
 EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
 ANYMAIL = {
-    "POSTMARK_SERVER_TOKEN": config("POSTMARK_TOKEN")
+    "POSTMARK_SERVER_TOKEN": config("POSTMARK_TOKEN", default=""),
 }
-DEFAULT_FROM_EMAIL = "noreply@tudominio.com"  # Debe estar verificado en Postmark
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='no-reply@tuproyecto.com')
+EMAIL_CONTACTO = config('EMAIL_CONTACTO', default=DEFAULT_FROM_EMAIL)
 EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = 'no-reply@inventario.com'
