@@ -21,11 +21,19 @@ def crear_roles(sender, **kwargs):
         grupo.permissions.set(permisos)
         grupo.save()
 
+
 @receiver(post_save, sender=User)
 def crear_o_actualizar_perfil_usuario(sender, instance, created, **kwargs):
     """
-    Crea un perfil para cada nuevo usuario o guarda el perfil existente.
+    Crea un perfil para cada nuevo usuario y se asegura de que exista al guardar.
     """
     if created:
         Perfil.objects.create(user=instance)
-    instance.perfil.save()
+
+    # Esta línea asegura que el perfil se guarde, pero puede fallar si no existe.
+    # La envolvemos en un bloque try/except para robustez, aunque el paso 2 es la solución real.
+    try:
+        instance.perfil.save()
+    except Perfil.DoesNotExist:
+        # Si el perfil no existe por alguna razón (como en usuarios antiguos), lo creamos.
+        Perfil.objects.create(user=instance)
