@@ -14,30 +14,30 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="table-responsive">
-      <table id="tabla-usuarios" class="table table-bordered table-hover">
+      <table id="tabla-usuarios" class="table table-bordered table-hover" style="width:100%">
         <thead class="table-light">
           <tr>
             <th>Usuario</th>
             <th>Nombre Completo</th>
             <th>Correo Electrónico</th>
             <th>Grupo (Rol)</th>
-            <th>Acciones</th>
+            <th class="text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for u in usuarios %}
           <tr>
             <td>{{ u.username }}</td>
-            <td>{{ u.first_name }} {{ u.last_name }}</td>
+            <td>{{ u.get_full_name|default:u.perfil.nombres|default:'' }} {{ u.perfil.apellidos|default:'' }}</td>
             <td>{{ u.email }}</td>
             <td>
               {% for group in u.groups.all %}
-                <span class="badge bg-primary">{{ group.name }}</span>
+                <span class="badge bg-primary rounded-pill">{{ group.name }}</span>
               {% empty %}
-                <span class="badge bg-secondary">Sin rol asignado</span>
+                <span class="badge bg-secondary rounded-pill">Sin rol asignado</span>
               {% endfor %}
             </td>
-            <td>
+            <td class="text-center">
               <a href="{% url 'editar_usuario' u.pk %}" class="btn btn-sm btn-warning" title="Editar">✏️</a>
               <a href="{% url 'eliminar_usuario' u.pk %}" class="btn btn-sm btn-danger" title="Eliminar">🗑️</a>
             </td>
@@ -51,4 +51,23 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializamos DataTables en nuestra tabla
+    var table = $('#tabla-usuarios').DataTable({
+        // Usamos el archivo de traducción al español
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"t>>' +
+             '<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+    });
+
+    // Personalizamos el campo de búsqueda que DataTables crea
+    $('.dataTables_filter input')
+      .attr('placeholder', 'Buscar en la tabla...')
+      .addClass('form-control form-control-sm');
+});
+</script>
 {% endblock %}
