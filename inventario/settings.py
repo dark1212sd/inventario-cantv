@@ -151,7 +151,7 @@ EMAIL_USE_TLS = True
 # CONFIGURACIÓN DE DJANGO-AXES (Seguridad de Login)
 # ==============================================================================
 AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = datetime.timedelta(minutes=15)
+AXES_COOLOFF_TIME = datetime.timedelta(minutes=5)
 AXES_USERNAME_FORM_FIELD = "username"
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'lockout.html'
