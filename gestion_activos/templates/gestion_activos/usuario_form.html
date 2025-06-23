@@ -1,16 +1,79 @@
 {% extends 'gestion_activos/base.html' %}
+
 {% block title %}{{ titulo }}{% endblock %}
 
 {% block content %}
 <div class="card shadow-sm p-4">
   <h2 class="text-primary mb-4">{{ titulo }}</h2>
 
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
-    {{ form.as_p }}
 
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de Usuario</label>
+        {{ form.username }}
+        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.nombres.id_for_label }}" class="form-label">Nombres</label>
+            {{ form.nombres }}
+            {% if form.nombres.errors %}<div class="text-danger small mt-1">{{ form.nombres.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos</label>
+            {{ form.apellidos }}
+            {% if form.apellidos.errors %}<div class="text-danger small mt-1">{{ form.apellidos.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.ci.id_for_label }}" class="form-label">Cédula (CI)</label>
+            {{ form.ci }}
+            {% if form.ci.errors %}<div class="text-danger small mt-1">{{ form.ci.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.grupo.id_for_label }}" class="form-label">Grupo (Rol)</label>
+            {{ form.grupo }}
+            {% if form.grupo.errors %}<div class="text-danger small mt-1">{{ form.grupo.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <hr>
+    <p class="text-muted small">{% if not form.instance.pk %}La contraseña es obligatoria para nuevos usuarios.{% else %}Deja los campos de contraseña en blanco si no deseas cambiarla.{% endif %}</p>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</slabel>
+            {{ form.password }}
+            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmar Contraseña</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
   </form>
 </div>
 {% endblock %}

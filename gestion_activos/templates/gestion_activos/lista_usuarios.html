@@ -5,53 +5,50 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="text-primary"><i class="fas fa-users-cog"></i> Usuarios y Roles</h2>
+  <h2 class="text-primary"><i class="fas fa-users-cog me-2"></i>Usuarios y Roles</h2>
   <a href="{% url 'crear_usuario' %}" class="btn btn-success">
-    <i class="fas fa-user-plus"></i> Agregar Usuario
+    <i class="fas fa-user-plus me-1"></i> Agregar Usuario
   </a>
 </div>
 
-<div class="table-responsive">
-  <table id="tabla-usuarios" class="table table-bordered table-striped" style="background-color: #e8f8f5;">
-    <thead class="table-dark">
-      <tr>
-        <th>Usuario</th>
-        <th>Grupos</th>
-        <th>Permisos</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in usuarios %}
-      <tr>
-        <td>{{ u.username }}</td>
-        <td>{{ u.groups.all|join:", " }}</td>
-        <td>{{ u.get_all_permissions|join:", " }}</td>
-        <td>
-          <a href="{% url 'editar_usuario' u.pk %}" class="btn btn-sm btn-warning">✏️</a>
-          <a href="{% url 'eliminar_usuario' u.pk %}" class="btn btn-sm btn-danger">🗑️</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="tabla-usuarios" class="table table-bordered table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre Completo</th>
+            <th>Correo Electrónico</th>
+            <th>Grupo (Rol)</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.first_name }} {{ u.last_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% for group in u.groups.all %}
+                <span class="badge bg-primary">{{ group.name }}</span>
+              {% empty %}
+                <span class="badge bg-secondary">Sin rol asignado</span>
+              {% endfor %}
+            </td>
+            <td>
+              <a href="{% url 'editar_usuario' u.pk %}" class="btn btn-sm btn-warning" title="Editar">✏️</a>
+              <a href="{% url 'eliminar_usuario' u.pk %}" class="btn btn-sm btn-danger" title="Eliminar">🗑️</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-  $(document).ready(function () {
-    let table = $('#tabla-usuarios').DataTable({
-      language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-      },
-      initComplete: function () {
-        $('#tabla-usuarios_filter input')
-          .addClass('form-control ms-2 animated-search')
-          .attr('placeholder', '🔍 Buscar usuario')
-          .css('width', '250px');
-      }
-    });
-  });
-</script>
 {% endblock %}
