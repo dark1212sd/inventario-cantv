@@ -18,13 +18,17 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv(
 # APLICACIONES
 # ==============================================================================
 INSTALLED_APPS = [
+    'gestion_activos',  # <-- Mueve tu app aquí, al principio de la lista
+
+    # Apps de Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'gestion_activos',
+
+    # Apps de Terceros
     'axes',
     'django.contrib.sites',
     'allauth',
