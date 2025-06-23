@@ -32,7 +32,7 @@ urlpatterns = [
 
     # --- VISTAS DE ADMINISTRACIÓN: UBICACIONES ---
     path('ubicaciones/', views.lista_ubicaciones, name='lista_ubicaciones'),
-    path('ubicaciones/crear/', views.crear_ubicacion, name='crear_categoria'), # Corregido: debería ser crear_ubicacion
+    path('ubicaciones/crear/', views.crear_ubicacion, name='crear_ubicacion'),
     path('ubicaciones/editar/<int:pk>/', views.editar_ubicacion, name='editar_ubicacion'),
     path('ubicaciones/eliminar/<int:pk>/', views.eliminar_ubicacion, name='eliminar_ubicacion'),
 

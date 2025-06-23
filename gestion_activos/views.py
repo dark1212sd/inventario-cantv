@@ -11,6 +11,7 @@ from .forms import (
     UsuarioForm, UsuarioActivoForm, PerfilForm
 )
 from .utils.decoradores import grupo_requerido
+from django.contrib.contenttypes.models import ContentType
 
 # --- Vistas de Autenticación y Permisos ---
 
