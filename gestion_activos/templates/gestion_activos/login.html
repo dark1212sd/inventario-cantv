@@ -17,6 +17,7 @@
       align-items: center;
       justify-content: center;
     }
+
     .login-container {
       width: 90%;
       max-width: 900px;
@@ -27,6 +28,7 @@
       background: white;
       animation: fadeIn 0.7s ease-in-out;
     }
+
     .left-panel {
       background-color: #a0f0e0;
       color: #003c3c;
@@ -37,19 +39,23 @@
       flex-direction: column;
       justify-content: center;
     }
+
     .right-panel {
       flex: 1;
       padding: 3rem 2rem;
     }
+
     .logo-icon {
       width: 80px;
       height: auto;
       margin-bottom: 1rem;
     }
+
     .form-control {
       border-radius: 20px;
       padding: 0.75rem 1rem;
     }
+
     .btn-login {
       background-color: #4fd1c5;
       border: none;
@@ -59,9 +65,11 @@
       padding: 0.75rem;
       transition: all 0.3s;
     }
+
     .btn-login:hover {
       background-color: #38b2ac;
     }
+
     @keyframes fadeIn {
       from {
         transform: scale(0.97);
@@ -72,10 +80,12 @@
         opacity: 1;
       }
     }
+
     @media (max-width: 768px) {
       .login-container {
         flex-direction: column;
       }
+
       .left-panel, .right-panel {
         width: 100%;
         padding: 2rem;
@@ -96,11 +106,13 @@
 
     {% if messages %}
         {% for message in messages %}
+            {% if message.tags == 'error' %}
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            {% endif %}
         {% endfor %}
     {% endif %}
     <form method="post" class="login-form">
@@ -114,7 +126,8 @@
         {{ form.password }}
       </div>
       <div class="mb-3 text-end">
-        <a href="#" class="text-decoration-none text-muted">¿Olvidaste tu contraseña?</a>
+        {# Este enlace puede necesitar una implementación futura si decides añadirla #}
+        {# <a href="{% url 'password_reset' %}" class="text-decoration-none text-muted">¿Olvidaste tu contraseña?</a> #}
       </div>
       <div class="d-grid">
         <button type="submit" class="btn btn-login">Iniciar sesión</button>
