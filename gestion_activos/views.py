@@ -16,7 +16,7 @@ from django.db.models import Q
 from django.contrib.auth.forms import PasswordChangeForm
 from .forms import PerfilForm
 from xhtml2pdf import pisa
-from axes.utils import get_user_attempts
+
 
 # Módulos locales de la aplicación
 from .models import Categoria, Ubicacion, Activo, LogAccion
@@ -50,9 +50,10 @@ def index_view(request):
     else:
         return redirect('mis_activos')
 
+
 def login_view(request):
     """
-    Maneja el inicio de sesión del usuario con lógica reforzada y mensajes
+    Maneja el inicio de sesión con lógica reforzada y mensajes
     detallados de intentos fallidos.
     """
     # La lógica para usuarios ya logueados se queda igual
@@ -82,22 +83,19 @@ def login_view(request):
                 else:
                     return redirect('lista_activos')
             else:
-                # --- NUEVA LÓGICA DE MENSAJE DE ERROR ---
-                # Obtenemos los intentos fallidos para este intento de login
-                attempts = get_user_attempts(request)
+                # --- LÓGICA DE MENSAJE DE ERROR ACTUALIZADA ---
 
-                # Obtenemos el límite de fallos desde settings, con 5 como valor por defecto
-                failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
-
-                if attempts:
-                    intentos_realizados = attempts.count()
-                    intentos_restantes = failure_limit - intentos_realizados
+                # Axes añade 'axes_failures_since_start' al request después de un fallo.
+                # Verificamos si este atributo existe.
+                if hasattr(request, 'axes_failures_since_start'):
+                    failures = request.axes_failures_since_start
+                    failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
+                    intentos_restantes = failure_limit - failures
 
                     if intentos_restantes > 0:
                         message = f"Usuario o contraseña incorrectos. Te quedan {intentos_restantes} intento(s)."
                     else:
-                        # Este mensaje se mostrará justo antes del bloqueo final
-                        message = "Has excedido el límite de intentos. Tu cuenta será bloqueada."
+                        message = "Has excedido el límite de intentos. Tu cuenta será bloqueada en el próximo intento."
                 else:
                     message = "Usuario o contraseña incorrectos."
 
