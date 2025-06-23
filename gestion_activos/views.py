@@ -2,6 +2,7 @@
 from io import BytesIO
 
 # Librerías de Django
+import openpyxl
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
@@ -14,10 +15,8 @@ from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth.forms import PasswordChangeForm
 from .forms import PerfilForm
-
-# Librerías de terceros
-import openpyxl
 from xhtml2pdf import pisa
+from axes.utils import get_user_attempts
 
 # Módulos locales de la aplicación
 from .models import Categoria, Ubicacion, Activo, LogAccion
