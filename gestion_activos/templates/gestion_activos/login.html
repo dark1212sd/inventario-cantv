@@ -11,110 +11,104 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #b2fefa, #0ed2f7);
+      /* Gradiente más suave y profesional */
+      background: #f4f7f6;
+      background: linear-gradient(to right, #eef2f3, #8e9eab);
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-
     .login-container {
       width: 90%;
       max-width: 900px;
       display: flex;
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-      border-radius: 10px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0,0,0,0.07);
+      border-radius: 15px;
       overflow: hidden;
       background: white;
       animation: fadeIn 0.7s ease-in-out;
     }
-
     .left-panel {
-      background-color: #a0f0e0;
-      color: #003c3c;
+      /* Un color de acento más sutil y corporativo */
+      background-color: #0056b3;
+      color: #ffffff;
       flex: 1;
       text-align: center;
       padding: 3rem 1.5rem;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
     }
-
     .right-panel {
       flex: 1;
-      padding: 3rem 2rem;
+      padding: 3rem 2.5rem;
     }
-
-    .logo-icon {
+    .logo-img { /* Cambiado de .logo-icon para más claridad */
       width: 80px;
       height: auto;
       margin-bottom: 1rem;
     }
-
-    .form-control {
-      border-radius: 20px;
-      padding: 0.75rem 1rem;
+    .left-panel h2 {
+      font-weight: 300;
     }
-
+    .left-panel h2 strong {
+      font-weight: 700;
+    }
+    .form-control {
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      border: 1px solid #ced4da;
+    }
+    .form-control:focus {
+        border-color: #0056b3;
+        box-shadow: 0 0 0 0.25rem rgba(0, 86, 179, 0.25);
+    }
     .btn-login {
-      background-color: #4fd1c5;
+      background-color: #0056b3;
       border: none;
       color: white;
       font-weight: bold;
-      border-radius: 20px;
+      border-radius: 8px;
       padding: 0.75rem;
       transition: all 0.3s;
     }
-
     .btn-login:hover {
-      background-color: #38b2ac;
+      background-color: #004494;
+      transform: translateY(-2px);
     }
-
     @keyframes fadeIn {
-      from {
-        transform: scale(0.97);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
-
     @media (max-width: 768px) {
-      .login-container {
-        flex-direction: column;
-      }
-
-      .left-panel, .right-panel {
-        width: 100%;
-        padding: 2rem;
-      }
+      .login-container { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 <div class="login-container">
   <div class="left-panel">
-    <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/Cantv_ai2r9q.png" alt="Logo Cantv" class="logo-icon">
+    <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/Cantv_ai2r9q.png" alt="Logo Cantv" class="logo-img">
     <h2>Inventario <strong>CANTV</strong></h2>
-    <p class="mt-3">Gestión eficiente de activos tecnológicos</p>
+    <p class="mt-3 opacity-75">Gestión eficiente de activos tecnológicos</p>
   </div>
 
   <div class="right-panel">
-    <h3 class="text-center mb-4">Iniciar sesión</h3>
+    <h3 class="text-center mb-4 fw-light">Iniciar sesión</h3>
 
     {% if messages %}
         {% for message in messages %}
             {% if message.tags == 'error' %}
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                {{ message }}
+                <i class="fas fa-exclamation-triangle me-2"></i>{{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             {% endif %}
         {% endfor %}
     {% endif %}
+
     <form method="post" class="login-form">
       {% csrf_token %}
       <div class="mb-3">
@@ -126,11 +120,10 @@
         {{ form.password }}
       </div>
       <div class="mb-3 text-end">
-        {# Este enlace puede necesitar una implementación futura si decides añadirla #}
-        {# <a href="{% url 'password_reset' %}" class="text-decoration-none text-muted">¿Olvidaste tu contraseña?</a> #}
+        <a href="{% url 'password_reset' %}" class="text-decoration-none small">¿Olvidaste tu contraseña?</a>
       </div>
       <div class="d-grid">
-        <button type="submit" class="btn btn-login">Iniciar sesión</button>
+        <button type="submit" class="btn btn-login btn-lg">Iniciar sesión</button>
       </div>
     </form>
   </div>

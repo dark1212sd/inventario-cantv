@@ -28,4 +28,9 @@ urlpatterns = [
     path('recuperar/enviado/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
     path('recuperar/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
     path('recuperar/completo/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
+    path('admin/', admin.site.urls),
+    # Añadimos las URLs de autenticación de Django. Esto incluye el reseteo de contraseña.
+    path('accounts/', include('django.contrib.auth.urls')),
+    # Incluimos las URLs de nuestra aplicación principal
+    path('', include('gestion_activos.urls')),
 ]
