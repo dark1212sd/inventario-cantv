@@ -14,7 +14,6 @@ from .utils.decoradores import grupo_requerido
 
 # --- Vistas de Autenticación y Permisos ---
 
-@login_required
 def index_view(request):
     """
     Vista de índice que redirige a los usuarios a su dashboard correspondiente
@@ -38,30 +37,31 @@ def index_view(request):
         # Es más seguro enviarlo a su dashboard personal (que probablemente estará vacío).
         return redirect('mis_activos')
 
+def login_view(request):
+        """
+        Maneja el inicio de sesión. La lógica de conteo y bloqueo es manejada
+        automáticamente por el middleware y backend de django-axes.
+        """
+        if request.user.is_authenticated:
+            return redirect('index')  # Redirige al despachador si ya está logueado
 
-@login_required
-def index_view(request):
-    """
-    Vista de índice que redirige a los usuarios a su dashboard correspondiente
-    basándose en su rol, con una lógica más explícita.
-    """
-    user = request.user
+        if request.method == 'POST':
+            form = LoginForm(request.POST)
+            if form.is_valid():
+                user = authenticate(request, **form.cleaned_data)
+                if user is not None:
+                    # `axes` resetea los intentos fallidos automáticamente en un login exitoso.
+                    login(request, user)
+                    messages.success(request, f'Bienvenido de nuevo, {user.username}!')
+                    return redirect('index')  # Redirige al despachador para que decida a dónde ir
+                else:
+                    # `axes` registra el intento fallido automáticamente.
+                    # Solo necesitamos mostrar un mensaje genérico.
+                    messages.error(request, 'Usuario o contraseña incorrectos.')
+        else:
+            form = LoginForm()
 
-    # Lista de roles que deben ser considerados como personal administrativo/de gestión.
-    roles_staff = ['Administrador', 'Supervisor', 'Técnico', 'Auditor']
-
-    # Prioridad 1: Superusuarios, usuarios con el flag 'is_staff', o usuarios en grupos de gestión.
-    if user.is_superuser or user.is_staff or user.groups.filter(name__in=roles_staff).exists():
-        return redirect('lista_activos')
-
-    # Prioridad 2: Usuarios finales con el rol 'Usuario'.
-    elif user.groups.filter(name='Usuario').exists():
-        return redirect('mis_activos')
-
-    # Fallback: Para cualquier otro caso (un usuario logueado sin grupo).
-    else:
-        # Es más seguro enviarlo a su dashboard personal (que probablemente estará vacío).
-        return redirect('mis_activos')
+        return render(request, 'gestion_activos/login.html', {'form': form})
 
 def logout_view(request):
     """Cierra la sesión del usuario."""
