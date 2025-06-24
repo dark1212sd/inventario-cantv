@@ -38,54 +38,91 @@ class UsuarioForm(forms.ModelForm):
     nombres = forms.CharField(label="Nombres", required=True)
     apellidos = forms.CharField(label="Apellidos", required=True)
     ci = forms.CharField(label="Cédula (CI)", required=True)
+    telefono_contacto = forms.CharField(label="Teléfono Principal", required=True)
     grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
 
-    # Nuevos campos para la contraseña
-    password = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=True)
-    password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=True)
+    # Campos para la contraseña con su confirmación
+    password = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False)
+    password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'grupo', 'password', 'password2']
-
-    def clean_password2(self):
-        # Validación para asegurar que las dos contraseñas coinciden
-        cd = self.cleaned_data
-        if cd['password'] != cd['password2']:
-            raise forms.ValidationError('Las contraseñas no coinciden.')
-        return cd['password2']
+        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password',
+                  'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Si estamos editando un usuario existente...
         if self.instance and self.instance.pk:
-            # Si estamos editando, hacemos los campos de contraseña opcionales
-            self.fields['password'].required = False
-            self.fields['password2'].required = False
-
-            # También poblamos los datos del perfil
+            # Poblamos los campos del perfil con los datos existentes
             if hasattr(self.instance, 'perfil'):
                 self.fields['nombres'].initial = self.instance.perfil.nombres
                 self.fields['apellidos'].initial = self.instance.perfil.apellidos
                 self.fields['ci'].initial = self.instance.perfil.ci
+                self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
+
+            # Poblamos el grupo actual
+            self.fields['grupo'].initial = self.instance.groups.first()
+
+            # Hacemos que la contraseña no sea obligatoria al editar
+            self.fields['password'].help_text = "Deja en blanco para no cambiar la contraseña."
+            self.fields['password2'].help_text = "Deja en blanco para no cambiar la contraseña."
+        else:
+            # Si estamos creando, la contraseña es obligatoria
+            self.fields['password'].required = True
+            self.fields['password2'].required = True
+
+    # --- VALIDACIONES PERSONALIZADAS ---
+
+    def clean_username(self):
+        """Valida que el nombre de usuario no esté ya en uso."""
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este nombre de usuario ya está en uso. Por favor, elige otro.')
+        return username
+
+    def clean_ci(self):
+        """Valida que la cédula no esté ya en uso."""
+        ci = self.cleaned_data.get('ci')
+        if Perfil.objects.filter(ci=ci).exclude(user=self.instance).exists():
+            raise forms.ValidationError('Ya existe un usuario con este número de cédula.')
+        return ci
+
+    def clean_telefono_contacto(self):
+        """Valida que el teléfono tenga un formato venezolano válido."""
+        telefono = self.cleaned_data.get('telefono_contacto')
+        if telefono:
+            telefono_limpio = re.sub(r'\D', '', telefono)
+            patron = re.compile(r'^(0412|0414|0424|0416|0426)\d{7}$')
+            if not patron.match(telefono_limpio):
+                raise forms.ValidationError(
+                    "Formato de teléfono inválido. Usa (0412, 0414, 0416, 0424, 0426) y 11 dígitos.")
+            return telefono_limpio
+        return telefono
+
+    def clean_password2(self):
+        """Valida que las dos contraseñas coincidan."""
+        password = self.cleaned_data.get("password")
+        password2 = self.cleaned_data.get("password2")
+        if password and password != password2:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+        return password2
 
     def save(self, commit=True):
         user = super().save(commit=False)
-
-        # Si se proporcionó una nueva contraseña, la establecemos
-        if self.cleaned_data["password"]:
-            user.set_password(self.cleaned_data["password"])
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
 
         if commit:
             user.save()
-            # Asignamos el grupo
             user.groups.set([self.cleaned_data['grupo']])
-
             # Guardamos los datos del Perfil
             user.perfil.nombres = self.cleaned_data['nombres']
             user.perfil.apellidos = self.cleaned_data['apellidos']
             user.perfil.ci = self.cleaned_data['ci']
+            user.perfil.telefono_contacto = self.cleaned_data['telefono_contacto']
             user.perfil.save()
-
         return user
 
 
@@ -133,20 +170,3 @@ class PerfilForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control', 'placeholder': f'Ingrese su {field.label.lower()}'})
-
-    # --- NUEVA FUNCIÓN DE VALIDACIÓN ---
-    def clean_telefono_contacto(self):
-        telefono = self.cleaned_data.get('telefono_contacto')
-        if telefono:
-            # Elimina espacios o guiones
-            telefono_limpio = re.sub(r'\D', '', telefono)
-
-            # Patrón para prefijos válidos y longitud total de 11 dígitos
-            patron = re.compile(r'^(0412|0414|0424|0416|0426)\d{7}$')
-
-            if not patron.match(telefono_limpio):
-                raise forms.ValidationError(
-                    "Por favor, ingrese un número de teléfono venezolano válido (ej: 04141234567).")
-
-            return telefono_limpio
-        return telefono
