@@ -13,67 +13,90 @@ from .forms import (
 from .utils.decoradores import grupo_requerido
 from django.contrib.contenttypes.models import ContentType
 
-# --- Vistas de Autenticación y Permisos ---
 
+# ==============================================================================
+# VISTAS DE ÍNDICE Y AUTENTICACIÓN
+# ==============================================================================
+@login_required
 def index_view(request):
-    """
-    Vista de índice que redirige a los usuarios a su dashboard correspondiente
-    basándose en su rol, con una lógica más explícita.
-    """
     user = request.user
-
-    # Lista de roles que deben ser considerados como personal administrativo/de gestión.
     roles_staff = ['Administrador', 'Supervisor', 'Técnico', 'Auditor']
-
-    # Prioridad 1: Superusuarios, usuarios con el flag 'is_staff', o usuarios en grupos de gestión.
     if user.is_superuser or user.is_staff or user.groups.filter(name__in=roles_staff).exists():
         return redirect('lista_activos')
-
-    # Prioridad 2: Usuarios finales con el rol 'Usuario'.
     elif user.groups.filter(name='Usuario').exists():
         return redirect('mis_activos')
-
-    # Fallback: Para cualquier otro caso (un usuario logueado sin grupo).
     else:
-        # Es más seguro enviarlo a su dashboard personal (que probablemente estará vacío).
-        return redirect('mis_activos')
+        return redirect('login')
 
 def login_view(request):
-        """
-        Maneja el inicio de sesión. La lógica de conteo y bloqueo es manejada
-        automáticamente por el middleware y backend de django-axes.
-        """
-        if request.user.is_authenticated:
-            return redirect('index')  # Redirige al despachador si ya está logueado
-
-        if request.method == 'POST':
-            form = LoginForm(request.POST)
-            if form.is_valid():
-                user = authenticate(request, **form.cleaned_data)
-                if user is not None:
-                    # `axes` resetea los intentos fallidos automáticamente en un login exitoso.
-                    login(request, user)
-                    messages.success(request, f'Bienvenido de nuevo, {user.username}!')
-                    return redirect('index')  # Redirige al despachador para que decida a dónde ir
-                else:
-                    # `axes` registra el intento fallido automáticamente.
-                    # Solo necesitamos mostrar un mensaje genérico.
-                    messages.error(request, 'Usuario o contraseña incorrectos.')
-        else:
-            form = LoginForm()
-
-        return render(request, 'gestion_activos/login.html', {'form': form})
+    if request.user.is_authenticated:
+        return redirect('index')
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = authenticate(request, **form.cleaned_data)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Bienvenido de nuevo, {user.username}!')
+                return redirect('index')
+            else:
+                messages.error(request, 'Usuario o contraseña incorrectos.')
+    else:
+        form = LoginForm()
+    return render(request, 'gestion_activos/login.html', {'form': form})
 
 def logout_view(request):
-    """Cierra la sesión del usuario."""
     logout(request)
     messages.info(request, 'Has cerrado sesión exitosamente.')
     return redirect('login')
 
 @login_required
 def sin_permisos(request):
-    """Página que se muestra cuando un usuario no tiene los permisos necesarios."""
     return render(request, 'gestion_activos/sin_permisos.html')
+# ==============================================================================
+# VISTAS PARA EL ROL "USUARIO" Y SU PERFIL
+# ==============================================================================
+
+@login_required
+@grupo_requerido('Usuario')
+def mis_activos(request):
+    activos = Activo.objects.filter(responsable=request.user).select_related('categoria', 'ubicacion')
+    return render(request, 'gestion_activos/mis_activos.html', {'activos': activos})
+
+@login_required
+def completar_perfil(request):
+    if request.user.perfil.info_personal_confirmada:
+        return redirect('mis_activos')
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, instance=request.user.perfil)
+        if form.is_valid():
+            perfil = form.save(commit=False)
+            perfil.info_personal_confirmada = True
+            perfil.save()
+            messages.success(request, '¡Gracias por completar tu perfil!')
+            return redirect('mis_activos')
+    else:
+        form = PerfilForm(instance=request.user.perfil)
+    return render(request, 'gestion_activos/completar_perfil.html', {'form': form})
+
+@login_required
+def ver_perfil(request):
+    if request.method == 'POST':
+        password_form = PasswordChangeForm(request.user, request.POST)
+        if password_form.is_valid():
+            user = password_form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, '¡Tu contraseña ha sido actualizada!')
+            return redirect('ver_perfil')
+    else:
+        password_form = PasswordChangeForm(request.user)
+    return render(request, 'gestion_activos/perfil.html', {'password_form': password_form})
+
+# ==============================================================================
+# VISTAS DE ADMINISTRACIÓN (CRUDs)
+# ==============================================================================
+
+# --- CRUD de Usuarios (para Admins) ---
 
 @login_required
 @grupo_requerido('Administrador', 'Supervisor', 'Técnico', 'Auditor')
@@ -107,13 +130,6 @@ def lista_activos(request):
     # Lógica de filtrado...
     activos = Activo.objects.all()
     return render(request, 'gestion_activos/lista_activos.html', {'activos': activos})
-
-@login_required
-@grupo_requerido('Usuario')
-def mis_activos(request):
-    """Muestra la lista de activos asignados al usuario logueado."""
-    activos_del_usuario = Activo.objects.filter(responsable=request.user).select_related('categoria', 'ubicacion')
-    return render(request, 'gestion_activos/mis_activos.html', {'activos': activos_del_usuario})
 # --- CRUD de Activos ---
 @login_required
 @grupo_requerido("Técnico", "Administrador")
@@ -540,23 +556,6 @@ def solicitar_mantenimiento(request, pk):
         messages.success(request, f'Se ha reportado la solicitud de mantenimiento para el activo "{activo.nombre}".')
     return redirect('mis_activos')
 
-
-@login_required
-def ver_perfil(request):
-    """Muestra el perfil del usuario y permite cambiar la contraseña."""
-    if request.method == 'POST':
-        password_form = PasswordChangeForm(request.user, request.POST)
-        if password_form.is_valid():
-            user = password_form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, '¡Tu contraseña ha sido actualizada correctamente!')
-            return redirect('ver_perfil')
-        else:
-            messages.error(request, 'Error al cambiar la contraseña. Por favor, corrige los errores.')
-    else:
-        password_form = PasswordChangeForm(request.user)
-    return render(request, 'gestion_activos/perfil.html', {'password_form': password_form})
-
 @login_required
 @grupo_requerido('Usuario')
 def historial_activo(request, pk):
@@ -614,21 +613,4 @@ def ver_perfil(request):
         'password_form': password_form,
     }
     return render(request, 'gestion_activos/perfil.html', context)
-
-@login_required
-def completar_perfil(request):
-    """Vista para forzar al usuario a completar su información personal una sola vez."""
-    if request.user.perfil.info_personal_confirmada:
-        return redirect('mis_activos')
-    if request.method == 'POST':
-        form = PerfilForm(request.POST, instance=request.user.perfil)
-        if form.is_valid():
-            perfil = form.save(commit=False)
-            perfil.info_personal_confirmada = True
-            perfil.save()
-            messages.success(request, '¡Gracias por completar tu perfil! Ya puedes usar el sistema.')
-            return redirect('mis_activos')
-    else:
-        form = PerfilForm(instance=request.user.perfil)
-    return render(request, 'gestion_activos/completar_perfil.html', {'form': form})
 

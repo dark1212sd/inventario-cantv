@@ -47,8 +47,7 @@ class UsuarioForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password',
-                  'password2']
+        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -156,7 +155,6 @@ class LoginForm(forms.Form):
             'placeholder': 'Ingrese su contraseña'
         })
     )
-
 
 class PerfilForm(forms.ModelForm):
     class Meta:
