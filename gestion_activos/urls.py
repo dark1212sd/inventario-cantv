@@ -47,4 +47,6 @@ urlpatterns = [
     path('reporte/pdf/', views.reporte_pdf, name='reporte_pdf'),
     path('reporte/excel/', views.exportar_excel, name='exportar_excel'),
     path('bitacora/', views.vista_bitacora, name='vista_bitacora'),
+
+    path('staff/mi-perfil/', views.editar_perfil_staff, name='editar_perfil_staff'),
 ]

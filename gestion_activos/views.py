@@ -74,6 +74,30 @@ def logout_view(request):
 def sin_permisos(request):
     """Página que se muestra cuando un usuario no tiene los permisos necesarios."""
     return render(request, 'gestion_activos/sin_permisos.html')
+
+@login_required
+@grupo_requerido('Administrador', 'Supervisor', 'Técnico', 'Auditor')
+def editar_perfil_staff(request):
+    perfil = request.user.perfil
+
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, instance=perfil)
+        if form.is_valid():
+            instancia_perfil = form.save(commit=False)
+            # Marcamos la bandera para que el middleware no lo vuelva a pedir
+            instancia_perfil.info_personal_confirmada = True
+            instancia_perfil.save()
+            messages.success(request, '¡Tu información de perfil ha sido guardada correctamente!')
+            # Lo redirigimos al dashboard principal de admin
+            return redirect('lista_activos')
+    else:
+        form = PerfilForm(instance=perfil)
+
+    context = {
+        'form': form,
+        'titulo': 'Completar / Editar Mi Perfil'
+    }
+    return render(request, 'gestion_activos/perfil_staff_form.html', context)
 # --- Vistas Principales (Dashboards) ---
 
 @login_required
