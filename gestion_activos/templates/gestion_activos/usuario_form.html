@@ -1,79 +1,92 @@
 {% extends 'gestion_activos/base.html' %}
 
-{% block title %}{{ titulo }}{% endblock %}
+{% block title %}{{ titulo|default:"Gestionar Usuario" }}{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4">
-  <h2 class="text-primary mb-4">{{ titulo }}</h2>
+<div class="card shadow-sm">
+  <div class="card-header py-3">
+    <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Gestionar Usuario" }}</h4>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
 
-  <form method="post" novalidate>
-    {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {% for error in form.non_field_errors %}
+            {{ error }}
+          {% endfor %}
+        </div>
+      {% endif %}
 
-    {% if form.non_field_errors %}
-      <div class="alert alert-danger">
-        {{ form.non_field_errors }}
+      <h5 class="mb-3 border-bottom pb-2">Datos de la Cuenta</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de Usuario</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
+        </div>
       </div>
-    {% endif %}
 
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de Usuario</label>
-        {{ form.username }}
-        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors }}</div>{% endif %}
-      </div>
-      <div class="col-md-6 mb-3">
-        <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
-        {{ form.email }}
-        {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
-      </div>
-    </div>
-
-    <div class="row">
+      <h5 class="mb-3 mt-4 border-bottom pb-2">Información Personal</h5>
+      <div class="row">
         <div class="col-md-6 mb-3">
             <label for="{{ form.nombres.id_for_label }}" class="form-label">Nombres</label>
             {{ form.nombres }}
-            {% if form.nombres.errors %}<div class="text-danger small mt-1">{{ form.nombres.errors }}</div>{% endif %}
+            {% if form.nombres.errors %}<div class="text-danger small mt-1">{{ form.nombres.errors|striptags }}</div>{% endif %}
         </div>
         <div class="col-md-6 mb-3">
             <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos</label>
             {{ form.apellidos }}
-            {% if form.apellidos.errors %}<div class="text-danger small mt-1">{{ form.apellidos.errors }}</div>{% endif %}
+            {% if form.apellidos.errors %}<div class="text-danger small mt-1">{{ form.apellidos.errors|striptags }}</div>{% endif %}
         </div>
-    </div>
-
-    <div class="row">
+      </div>
+      <div class="row">
         <div class="col-md-6 mb-3">
             <label for="{{ form.ci.id_for_label }}" class="form-label">Cédula (CI)</label>
             {{ form.ci }}
-            {% if form.ci.errors %}<div class="text-danger small mt-1">{{ form.ci.errors }}</div>{% endif %}
+            {% if form.ci.errors %}<div class="text-danger small mt-1">{{ form.ci.errors|striptags }}</div>{% endif %}
         </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.telefono_contacto.id_for_label }}" class="form-label">Teléfono Principal</label>
+            {{ form.telefono_contacto }}
+            {% if form.telefono_contacto.errors %}<div class="text-danger small mt-1">{{ form.telefono_contacto.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <h5 class="mb-3 mt-4 border-bottom pb-2">Rol y Contraseña</h5>
+      <div class="row">
         <div class="col-md-6 mb-3">
             <label for="{{ form.grupo.id_for_label }}" class="form-label">Grupo (Rol)</label>
             {{ form.grupo }}
-            {% if form.grupo.errors %}<div class="text-danger small mt-1">{{ form.grupo.errors }}</div>{% endif %}
+            {% if form.grupo.errors %}<div class="text-danger small mt-1">{{ form.grupo.errors|striptags }}</div>{% endif %}
         </div>
-    </div>
-
-    <hr>
-    <p class="text-muted small">{% if not form.instance.pk %}La contraseña es obligatoria para nuevos usuarios.{% else %}Deja los campos de contraseña en blanco si no deseas cambiarla.{% endif %}</p>
-
-    <div class="row">
+      </div>
+      <p class="text-muted small">{% if not form.instance.pk %}La contraseña es obligatoria para nuevos usuarios.{% else %}Deja los campos de contraseña en blanco si no deseas cambiarla.{% endif %}</p>
+      <div class="row">
         <div class="col-md-6 mb-3">
             <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</slabel>
             {{ form.password }}
-            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors }}</div>{% endif %}
+            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
         </div>
         <div class="col-md-6 mb-3">
             <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmar Contraseña</label>
             {{ form.password2 }}
-            {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors }}</div>{% endif %}
+            {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>{% endif %}
         </div>
-    </div>
+      </div>
 
-    <div class="text-end">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
-    </div>
-  </form>
+      <hr class="mt-4">
+      <div class="text-end">
+          <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar Usuario</button>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

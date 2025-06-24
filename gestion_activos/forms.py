@@ -31,7 +31,6 @@ class UbicacionForm(forms.ModelForm):
         model = Ubicacion
         fields = ['nombre', 'descripcion']
 
-
 class UsuarioForm(forms.ModelForm):
     # Campos del modelo User y Perfil
     email = forms.EmailField(label="Correo Electrónico", required=True)
@@ -62,10 +61,6 @@ class UsuarioForm(forms.ModelForm):
 
             # Poblamos el grupo actual
             self.fields['grupo'].initial = self.instance.groups.first()
-
-            # Hacemos que la contraseña no sea obligatoria al editar
-            self.fields['password'].help_text = "Deja en blanco para no cambiar la contraseña."
-            self.fields['password2'].help_text = "Deja en blanco para no cambiar la contraseña."
         else:
             # Si estamos creando, la contraseña es obligatoria
             self.fields['password'].required = True
@@ -81,9 +76,17 @@ class UsuarioForm(forms.ModelForm):
         return username
 
     def clean_ci(self):
-        """Valida que la cédula no esté ya en uso."""
+        """Valida que la cédula no esté ya en uso, corrigiendo el error al crear."""
         ci = self.cleaned_data.get('ci')
-        if Perfil.objects.filter(ci=ci).exclude(user=self.instance).exists():
+        if not ci:
+            return ci
+
+        query = Perfil.objects.filter(ci=ci)
+        # Si estamos editando (self.instance.pk tiene un valor), excluimos al usuario actual.
+        if self.instance and self.instance.pk:
+            query = query.exclude(user=self.instance)
+
+        if query.exists():
             raise forms.ValidationError('Ya existe un usuario con este número de cédula.')
         return ci
 
@@ -94,8 +97,7 @@ class UsuarioForm(forms.ModelForm):
             telefono_limpio = re.sub(r'\D', '', telefono)
             patron = re.compile(r'^(0412|0414|0424|0416|0426)\d{7}$')
             if not patron.match(telefono_limpio):
-                raise forms.ValidationError(
-                    "Formato de teléfono inválido. Usa (0412, 0414, 0416, 0424, 0426) y 11 dígitos.")
+                raise forms.ValidationError("Formato inválido. Usa un prefijo válido (0412, etc.) y 11 dígitos.")
             return telefono_limpio
         return telefono
 
@@ -103,27 +105,36 @@ class UsuarioForm(forms.ModelForm):
         """Valida que las dos contraseñas coincidan."""
         password = self.cleaned_data.get("password")
         password2 = self.cleaned_data.get("password2")
+        # Solo validamos si se ha ingresado algo en el primer campo de contraseña
         if password and password != password2:
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return password2
 
     def save(self, commit=True):
+        # Guardamos el objeto User, pero sin commit para manejar la contraseña
         user = super().save(commit=False)
+
         password = self.cleaned_data.get("password")
         if password:
             user.set_password(password)
 
         if commit:
             user.save()
+            # Asignamos el grupo
             user.groups.set([self.cleaned_data['grupo']])
-            # Guardamos los datos del Perfil
+
+            # Actualizamos o creamos el perfil
+            # Usamos hasattr para el caso de que el perfil no exista (aunque la señal debería crearlo)
+            if not hasattr(user, 'perfil'):
+                Perfil.objects.create(user=user)
+
             user.perfil.nombres = self.cleaned_data['nombres']
             user.perfil.apellidos = self.cleaned_data['apellidos']
             user.perfil.ci = self.cleaned_data['ci']
             user.perfil.telefono_contacto = self.cleaned_data['telefono_contacto']
             user.perfil.save()
-        return user
 
+        return user
 
 class UsuarioActivoForm(forms.ModelForm):
     class Meta:
@@ -133,7 +144,6 @@ class UsuarioActivoForm(forms.ModelForm):
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 3}),
         }
-
 
 # --- NUEVO: AÑADIMOS EL FORMULARIO QUE FALTABA ---
 class LoginForm(forms.Form):
