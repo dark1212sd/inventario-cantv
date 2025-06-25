@@ -1,43 +1,81 @@
 {% extends 'gestion_activos/base.html' %}
-{% load static %}
 
-{% block title %}{{ titulo }}{% endblock %}
+{% block title %}{{ titulo|default:"Gestionar Activo" }}{% endblock %}
 
 {% block content %}
-<h2>{{ titulo }}</h2>
+<div class="card shadow-sm">
+  <div class="card-header py-3">
+    <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Gestionar Activo" }}</h4>
+  </div>
+  <div class="card-body p-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
 
-<form method="post">
-  {% csrf_token %}
-  <div class="mb-3">
-    {{ form.codigo.label_tag }}
-    {{ form.codigo }}
-  </div>
-  <div class="mb-3">
-    {{ form.nombre.label_tag }}
-    {{ form.nombre }}
-  </div>
-  <div class="mb-3">
-    {{ form.descripcion.label_tag }}
-    {{ form.descripcion }}
-  </div>
-  <div class="mb-3">
-    {{ form.categoria.label_tag }}
-    {{ form.categoria }}
-  </div>
-  <div class="mb-3">
-    {{ form.ubicacion.label_tag }}
-    {{ form.ubicacion }}
-  </div>
-  <div class="mb-3">
-    {{ form.estado.label_tag }}
-    {{ form.estado }}
-  </div>
-  <div class="mb-3">
-    {{ form.responsable.label_tag }}
-    {{ form.responsable }}
-  </div>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors|striptags }}</div>
+      {% endif %}
 
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Cancelar</a>
-</form>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="{{ form.codigo.id_for_label }}" class="form-label">Código <span class="text-danger">*</span></label>
+            {{ form.codigo }}
+            {% if form.codigo.errors %}<div class="text-danger small mt-1">{{ form.codigo.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre del Activo <span class="text-danger">*</span></label>
+            {{ form.nombre }}
+            {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+            {{ form.descripcion }}
+            {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría</label>
+            {{ form.categoria }}
+            {% if form.categoria.errors %}<div class="text-danger small mt-1">{{ form.categoria.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.ubicacion.id_for_label }}" class="form-label">Ubicación</label>
+            {{ form.ubicacion }}
+            {% if form.ubicacion.errors %}<div class="text-danger small mt-1">{{ form.ubicacion.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.estado.id_for_label }}" class="form-label">Estado <span class="text-danger">*</span></label>
+            {{ form.estado }}
+            {% if form.estado.errors %}<div class="text-danger small mt-1">{{ form.estado.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.responsable.id_for_label }}" class="form-label">Responsable (Usuario)</label>
+            {{ form.responsable }}
+            {% if form.responsable.errors %}<div class="text-danger small mt-1">{{ form.responsable.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <hr class="mt-4">
+      <div class="text-end">
+          <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar Activo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Pequeño script para poner el foco en el primer campo al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const firstInput = document.getElementById('id_codigo');
+    if (firstInput) {
+        firstInput.focus();
+    }
+});
+</script>
 {% endblock %}

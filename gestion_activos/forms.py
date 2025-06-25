@@ -28,7 +28,7 @@ class LoginForm(forms.Form):
 # ==============================================================================
 class ActivoForm(forms.ModelForm):
     responsable = forms.ModelChoiceField(
-        queryset=User.objects.all(),
+        queryset=User.objects.all().order_by('username'),
         required=False,
         label="Responsable (Usuario)",
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -37,8 +37,19 @@ class ActivoForm(forms.ModelForm):
     class Meta:
         model = Activo
         exclude = ['fecha_registro']
-        widgets = {'descripcion': forms.Textarea(attrs={'rows': 3})}
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'rows': 3}),
+        }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Bucle para añadir la clase 'form-control' a todos los campos
+        for field_name, field in self.fields.items():
+            # A los campos de tipo 'select' les ponemos la clase 'form-select'
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs['class'] = 'form-select'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
 class CategoriaForm(forms.ModelForm):
     class Meta:
