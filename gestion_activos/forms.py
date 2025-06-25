@@ -4,6 +4,28 @@ from django.contrib.auth.models import User, Group
 from .models import Perfil
 import re
 
+from django import forms
+from django.contrib.auth.models import User, Group
+from .models import Activo, Categoria, Ubicacion, Perfil
+import re
+
+
+# ==============================================================================
+# FORMULARIO DE LOGIN
+# ==============================================================================
+class LoginForm(forms.Form):
+    """Formulario para el inicio de sesión de usuarios."""
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingrese su usuario'})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Ingrese su contraseña'})
+    )
+
+
+# ==============================================================================
+# FORMULARIOS PARA MODELOS CRUD (Activo, Categoria, Ubicacion)
+# ==============================================================================
 class ActivoForm(forms.ModelForm):
     responsable = forms.ModelChoiceField(
         queryset=User.objects.all(),
@@ -15,9 +37,7 @@ class ActivoForm(forms.ModelForm):
     class Meta:
         model = Activo
         exclude = ['fecha_registro']
-        widgets = {
-            'descripcion': forms.Textarea(attrs={'rows': 3}),
-        }
+        widgets = {'descripcion': forms.Textarea(attrs={'rows': 3})}
 
 
 class CategoriaForm(forms.ModelForm):
@@ -31,64 +51,33 @@ class UbicacionForm(forms.ModelForm):
         model = Ubicacion
         fields = ['nombre', 'descripcion']
 
-class UsuarioForm(forms.ModelForm):
-    # Campos del modelo User y Perfil
-    email = forms.EmailField(label="Correo Electrónico", required=True)
-    nombres = forms.CharField(label="Nombres", required=True)
-    apellidos = forms.CharField(label="Apellidos", required=True)
-    ci = forms.CharField(label="Cédula (CI)", required=True)
-    telefono_contacto = forms.CharField(label="Teléfono Principal", required=True)
-    grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
 
-    # Campos para la contraseña con su confirmación
-    password = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False)
-    password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False)
+# ==============================================================================
+# FORMULARIOS ESPECÍFICOS PARA EL ROL "USUARIO"
+# ==============================================================================
+class UsuarioActivoForm(forms.ModelForm):
+    """Formulario restringido para que un usuario edite su propio activo."""
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password', 'password2']
+        model = Activo
+        exclude = ['responsable', 'codigo', 'fecha_registro']
+        widgets = {'descripcion': forms.Textarea(attrs={'rows': 3})}
+
+
+class PerfilForm(forms.ModelForm):
+    """Formulario para que los usuarios editen su propia información de perfil."""
+
+    class Meta:
+        model = Perfil
+        fields = ['nombres', 'apellidos', 'ci', 'telefono_contacto', 'telefono_alterno', 'fecha_nacimiento']
+        widgets = {
+            'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Si estamos editando un usuario existente...
-        if self.instance and self.instance.pk:
-            # Poblamos los campos del perfil con los datos existentes
-            if hasattr(self.instance, 'perfil'):
-                self.fields['nombres'].initial = self.instance.perfil.nombres
-                self.fields['apellidos'].initial = self.instance.perfil.apellidos
-                self.fields['ci'].initial = self.instance.perfil.ci
-                self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
-
-            # Poblamos el grupo actual
-            self.fields['grupo'].initial = self.instance.groups.first()
-        else:
-            # Si estamos creando, la contraseña es obligatoria
-            self.fields['password'].required = True
-            self.fields['password2'].required = True
-
-    # --- VALIDACIONES PERSONALIZADAS ---
-
-    def clean_username(self):
-        """Valida que el nombre de usuario no esté ya en uso."""
-        username = self.cleaned_data.get('username')
-        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('Este nombre de usuario ya está en uso. Por favor, elige otro.')
-        return username
-
-    def clean_ci(self):
-        """Valida que la cédula no esté ya en uso, corrigiendo el error al crear."""
-        ci = self.cleaned_data.get('ci')
-        if not ci:
-            return ci
-
-        query = Perfil.objects.filter(ci=ci)
-        # Si estamos editando (self.instance.pk tiene un valor), excluimos al usuario actual.
-        if self.instance and self.instance.pk:
-            query = query.exclude(user=self.instance)
-
-        if query.exists():
-            raise forms.ValidationError('Ya existe un usuario con este número de cédula.')
-        return ci
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': 'form-control'})
 
     def clean_telefono_contacto(self):
         """Valida que el teléfono tenga un formato venezolano válido."""
@@ -101,80 +90,92 @@ class UsuarioForm(forms.ModelForm):
             return telefono_limpio
         return telefono
 
+
+# ==============================================================================
+# FORMULARIO DE GESTIÓN DE USUARIOS (Para Admins) - VERSIÓN FINAL
+# ==============================================================================
+class UsuarioForm(forms.ModelForm):
+    """
+    Formulario completo para que un Admin cree o edite usuarios,
+    con todas las validaciones robustas.
+    """
+    # Campos que no están en el modelo User, los definimos explícitamente.
+    nombres = forms.CharField(label="Nombres", required=False)
+    apellidos = forms.CharField(label="Apellidos", required=False)
+    ci = forms.CharField(label="Cédula (CI)", required=False)
+    telefono_contacto = forms.CharField(label="Teléfono Principal", required=False)
+    grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
+    password = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False)
+    password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password',
+                  'password2']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Si estamos editando un usuario existente (self.instance.pk tiene un valor)
+        if self.instance and self.instance.pk:
+            # Poblamos los campos del perfil con los datos guardados
+            if hasattr(self.instance, 'perfil'):
+                self.fields['nombres'].initial = self.instance.perfil.nombres
+                self.fields['apellidos'].initial = self.instance.perfil.apellidos
+                self.fields['ci'].initial = self.instance.perfil.ci
+                self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
+
+            # Poblamos el grupo actual del usuario
+            self.fields['grupo'].initial = self.instance.groups.first()
+        else:
+            # Si estamos creando un usuario nuevo, la contraseña es obligatoria
+            self.fields['password'].required = True
+            self.fields['password2'].required = True
+
+    # --- VALIDACIONES PERSONALIZADAS ---
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        # Excluimos el propio usuario de la búsqueda para permitir guardar sin cambios
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este nombre de usuario ya está en uso.')
+        return username
+
+    def clean_ci(self):
+        ci = self.cleaned_data.get('ci')
+        if ci:  # Solo validamos si se ingresó algo
+            query = Perfil.objects.filter(ci=ci)
+            # Al editar, excluimos al propio usuario de la búsqueda de duplicados
+            if self.instance and self.instance.pk:
+                query = query.exclude(user=self.instance)
+            if query.exists():
+                raise forms.ValidationError('Ya existe un usuario con este número de cédula.')
+        return ci
+
     def clean_password2(self):
-        """Valida que las dos contraseñas coincidan."""
         password = self.cleaned_data.get("password")
         password2 = self.cleaned_data.get("password2")
-        # Solo validamos si se ha ingresado algo en el primer campo de contraseña
+        # Si se ingresó una contraseña, ambas deben coincidir
         if password and password != password2:
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return password2
 
     def save(self, commit=True):
-        # Guardamos el objeto User, pero sin commit para manejar la contraseña
         user = super().save(commit=False)
-
         password = self.cleaned_data.get("password")
         if password:
             user.set_password(password)
 
         if commit:
             user.save()
-            # Asignamos el grupo
             user.groups.set([self.cleaned_data['grupo']])
-
-            # Actualizamos o creamos el perfil
-            # Usamos hasattr para el caso de que el perfil no exista (aunque la señal debería crearlo)
+            # Usamos hasattr para el caso de que el perfil no se haya creado aún (aunque la señal debería hacerlo)
             if not hasattr(user, 'perfil'):
                 Perfil.objects.create(user=user)
-
-            user.perfil.nombres = self.cleaned_data['nombres']
-            user.perfil.apellidos = self.cleaned_data['apellidos']
-            user.perfil.ci = self.cleaned_data['ci']
-            user.perfil.telefono_contacto = self.cleaned_data['telefono_contacto']
+            # Actualizamos los datos del perfil
+            user.perfil.nombres = self.cleaned_data.get('nombres', '')
+            user.perfil.apellidos = self.cleaned_data.get('apellidos', '')
+            user.perfil.ci = self.cleaned_data.get('ci', '')
+            user.perfil.telefono_contacto = self.cleaned_data.get('telefono_contacto', '')
             user.perfil.save()
 
         return user
-
-class UsuarioActivoForm(forms.ModelForm):
-    class Meta:
-        model = Activo
-        # Excluimos los campos que un usuario normal no debe cambiar
-        exclude = ['responsable', 'codigo', 'fecha_registro']
-        widgets = {
-            'descripcion': forms.Textarea(attrs={'rows': 3}),
-        }
-
-# --- NUEVO: AÑADIMOS EL FORMULARIO QUE FALTABA ---
-class LoginForm(forms.Form):
-    """
-    Formulario para el inicio de sesión de usuarios.
-    """
-    username = forms.CharField(
-        label="Nombre de Usuario",
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Ingrese su usuario'
-        })
-    )
-    password = forms.CharField(
-        label="Contraseña",
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Ingrese su contraseña'
-        })
-    )
-
-class PerfilForm(forms.ModelForm):
-    class Meta:
-        model = Perfil
-        fields = ['nombres', 'apellidos', 'ci', 'telefono_contacto', 'telefono_alterno', 'fecha_nacimiento']
-        widgets = {
-            'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            field.widget.attrs.update({'class': 'form-control', 'placeholder': f'Ingrese su {field.label.lower()}'})

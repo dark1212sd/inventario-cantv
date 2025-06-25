@@ -12,6 +12,7 @@ from .forms import (
 )
 from .utils.decoradores import grupo_requerido
 from django.contrib.contenttypes.models import ContentType
+from django.http import JsonResponse
 
 
 # ==============================================================================
@@ -92,34 +93,45 @@ def ver_perfil(request):
         password_form = PasswordChangeForm(request.user)
     return render(request, 'gestion_activos/perfil.html', {'password_form': password_form})
 
-# ==============================================================================
-# VISTAS DE ADMINISTRACIÓN (CRUDs)
-# ==============================================================================
-
-# --- CRUD de Usuarios (para Admins) ---
-
 @login_required
 @grupo_requerido('Administrador', 'Supervisor', 'Técnico', 'Auditor')
 def editar_perfil_staff(request):
-    perfil = request.user.perfil
+    """
+    Vista para que el personal administrativo (staff) complete o edite
+    su propia información de perfil, manteniéndose dentro del layout
+    de administración.
+    """
+    # Se obtiene el perfil del usuario logueado.
+    # Se añade un try/except para el caso extremo de que no exista.
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        # Si por alguna razón el perfil no se creó con la señal, se crea aquí.
+        perfil = Perfil.objects.create(user=request.user)
 
     if request.method == 'POST':
+        # Si se envía el formulario, se procesa con los datos enviados.
         form = PerfilForm(request.POST, instance=perfil)
         if form.is_valid():
             instancia_perfil = form.save(commit=False)
-            # Marcamos la bandera para que el middleware no lo vuelva a pedir
+
+            # Se marca la bandera para que el middleware no lo vuelva a pedir.
             instancia_perfil.info_personal_confirmada = True
             instancia_perfil.save()
+
             messages.success(request, '¡Tu información de perfil ha sido guardada correctamente!')
-            # Lo redirigimos al dashboard principal de admin
+
+            # Se redirige al dashboard principal de administración.
             return redirect('lista_activos')
     else:
+        # Si es una petición GET, se muestra el formulario con los datos actuales del perfil.
         form = PerfilForm(instance=perfil)
 
     context = {
         'form': form,
         'titulo': 'Completar / Editar Mi Perfil'
     }
+    # Renderiza la plantilla diseñada para el layout de administración.
     return render(request, 'gestion_activos/perfil_staff_form.html', context)
 # --- Vistas Principales (Dashboards) ---
 
@@ -614,3 +626,20 @@ def ver_perfil(request):
     }
     return render(request, 'gestion_activos/perfil.html', context)
 
+
+def check_username_availability(request):
+    username = request.GET.get('value', None)
+    is_taken = User.objects.filter(username__iexact=username).exists()
+    return JsonResponse({'is_taken': is_taken})
+
+
+def check_email_availability(request):
+    email = request.GET.get('value', None)
+    is_taken = User.objects.filter(email__iexact=email).exists()
+    return JsonResponse({'is_taken': is_taken})
+
+
+def check_ci_availability(request):
+    ci = request.GET.get('value', None)
+    is_taken = Perfil.objects.filter(ci=ci).exists()
+    return JsonResponse({'is_taken': is_taken})

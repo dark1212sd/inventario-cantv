@@ -49,4 +49,8 @@ urlpatterns = [
     path('bitacora/', views.vista_bitacora, name='vista_bitacora'),
 
     path('staff/mi-perfil/', views.editar_perfil_staff, name='editar_perfil_staff'),
+
+    path('check/username/', views.check_username_availability, name='check_username'),
+    path('check/email/', views.check_email_availability, name='check_email'),
+    path('check/ci/', views.check_ci_availability, name='check_ci'),
 ]
