@@ -96,22 +96,27 @@ class PerfilForm(forms.ModelForm):
 # ==============================================================================
 
 class UsuarioForm(forms.ModelForm):
-    # Definimos los campos para tener control total
     email = forms.EmailField(label="Correo Electrónico", required=True)
     nombres = forms.CharField(label="Nombres", required=False)
     apellidos = forms.CharField(label="Apellidos", required=False)
     ci = forms.CharField(label="Cédula (CI)", required=False)
     telefono_contacto = forms.CharField(label="Teléfono Principal", required=False)
     grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
-    password = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False)
+    password = forms.CharField(
+        label="Contraseña",
+        widget=forms.PasswordInput,
+        required=False,
+        help_text="Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número."
+    )
 
     class Meta:
         model = User
+        # Asegúrate de que todos los campos estén listados aquí
         fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Si estamos creando un usuario nuevo, la contraseña es obligatoria
+        # Si es un usuario nuevo, la contraseña es obligatoria
         if not self.instance.pk:
             self.fields['password'].required = True
 
@@ -124,27 +129,42 @@ class UsuarioForm(forms.ModelForm):
                 self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
             self.fields['grupo'].initial = self.instance.groups.first()
 
+    # --- VALIDACIONES ---
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este nombre de usuario ya está en uso.')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este correo electrónico ya está registrado.')
+        return email
+
+    def clean_ci(self):
+        ci = self.cleaned_data.get('ci')
+        if ci:
+            query = Perfil.objects.filter(ci=ci)
+            if self.instance and self.instance.pk:
+                query = query.exclude(user=self.instance)
+            if query.exists():
+                raise forms.ValidationError('Este número de cédula ya está en uso.')
+        return ci
+
     def clean_password(self):
-        """Validación de contraseña robusta."""
         password = self.cleaned_data.get('password')
-        # La contraseña solo es obligatoria si estamos creando un usuario nuevo
         if not self.instance.pk and not password:
             raise forms.ValidationError("La contraseña es obligatoria para nuevos usuarios.")
-
-        if password:  # Aplicar validaciones solo si se proveyó una contraseña
-            if len(password) < 8:
-                raise forms.ValidationError("Debe tener al menos 8 caracteres.")
-            if not re.search(r'[A-Z]', password):
-                raise forms.ValidationError("Debe contener al menos una mayúscula.")
-            if not re.search(r'[a-z]', password):
-                raise forms.ValidationError("Debe contener al menos una minúscula.")
-            if not re.search(r'[0-9]', password):
-                raise forms.ValidationError("Debe contener al menos un número.")
+        if password:
+            if len(password) < 8: raise forms.ValidationError("Debe tener al menos 8 caracteres.")
+            if not re.search(r'[A-Z]', password): raise forms.ValidationError("Debe contener al menos una mayúscula.")
+            if not re.search(r'[a-z]', password): raise forms.ValidationError("Debe contener al menos una minúscula.")
+            if not re.search(r'[0-9]', password): raise forms.ValidationError("Debe contener al menos un número.")
         return password
 
-    # ... (El resto de tus validaciones como clean_username y clean_ci se quedan igual) ...
-
     def save(self, commit=True):
+        # ... (La lógica de guardado que ya teníamos funciona bien con esto)
         user = super().save(commit=False)
         password = self.cleaned_data.get("password")
         if password:

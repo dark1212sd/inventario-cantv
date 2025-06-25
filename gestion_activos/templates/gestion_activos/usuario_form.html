@@ -2,22 +2,11 @@
 
 {% block extra_head %}
 <style>
-    #password-reqs {
-        display: none; /* Oculto por defecto */
-        padding-left: 0;
-        list-style-type: none;
-        font-size: 0.875em;
-    }
-    #password-reqs li {
-        margin-bottom: 0.25rem;
-        transition: color 0.3s;
-    }
-    #password-reqs li.valid {
-        color: #198754; /* Verde de éxito de Bootstrap */
-    }
-    #password-reqs li.invalid {
-        color: #6c757d; /* Gris de Bootstrap */
-    }
+    #password-reqs { display: none; padding-left: 0; list-style-type: none; font-size: 0.875em; }
+    #password-reqs li { margin-bottom: 0.25rem; transition: color 0.3s; }
+    #password-reqs li.valid { color: #198754; }
+    #password-reqs li.invalid { color: #6c757d; }
+    .input-group-text { background-color: #e9ecef; border-left: 0; }
 </style>
 {% endblock %}
 
@@ -27,7 +16,7 @@
     <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Gestionar Usuario" }}</h4>
   </div>
   <div class="card-body">
-    <form method="post" novalidate>
+    <form method="post" id="userForm" novalidate>
       {% csrf_token %}
 
       {% if form.non_field_errors %}
@@ -37,13 +26,19 @@
       <h5 class="mb-3 border-bottom pb-2">Datos de la Cuenta</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-          <label class="form-label">Nombre de Usuario</label>
-          {{ form.username }}
+          <label for="id_username" class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
+          <div class="input-group">
+            {{ form.username }}
+            <span class="input-group-text" id="username-status"></span>
+          </div>
           {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
         </div>
         <div class="col-md-6 mb-3">
-          <label class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
-          {{ form.email }}
+          <label for="id_email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
+          <div class="input-group">
+            {{ form.email }}
+            <span class="input-group-text" id="email-status"></span>
+          </div>
           {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
         </div>
       </div>
@@ -51,19 +46,34 @@
       <h5 class="mb-3 mt-4 border-bottom pb-2">Información Personal (Opcional en creación)</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-            <label class="form-label">Nombres</label>
+            <label for="{{ form.nombres.id_for_label }}" class="form-label">Nombres</label>
             {{ form.nombres }}
         </div>
         <div class="col-md-6 mb-3">
-            <label class="form-label">Apellidos</label>
+            <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos</label>
             {{ form.apellidos }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.ci.id_for_label }}" class="form-label">Cédula (CI)</label>
+            <div class="input-group">
+                {{ form.ci }}
+                <span class="input-group-text" id="ci-status"></span>
+            </div>
+            {% if form.ci.errors %}<div class="text-danger small mt-1">{{ form.ci.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.telefono_contacto.id_for_label }}" class="form-label">Teléfono Principal</label>
+            {{ form.telefono_contacto }}
+            {% if form.telefono_contacto.errors %}<div class="text-danger small mt-1">{{ form.telefono_contacto.errors|striptags }}</div>{% endif %}
         </div>
       </div>
 
       <h5 class="mb-3 mt-4 border-bottom pb-2">Rol y Contraseña</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-            <label class="form-label">Grupo (Rol) <span class="text-danger">*</span></label>
+            <label for="{{ form.grupo.id_for_label }}" class="form-label">Grupo (Rol) <span class="text-danger">*</span></label>
             {{ form.grupo }}
         </div>
         <div class="col-md-6 mb-3">
@@ -75,7 +85,6 @@
                 </button>
             </div>
             {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
-
             <ul id="password-reqs" class="mt-2">
                 <li id="req-length" class="invalid"><i class="fas fa-times-circle me-2"></i>Al menos 8 caracteres</li>
                 <li id="req-upper" class="invalid"><i class="fas fa-times-circle me-2"></i>Una letra mayúscula</li>
@@ -98,62 +107,70 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para mostrar/ocultar contraseña
     const passwordInput = document.getElementById('id_password');
     const togglePasswordBtn = document.getElementById('togglePassword');
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+    }
+
+    // Lógica para la guía visual de requisitos de contraseña
     const reqsContainer = document.getElementById('password-reqs');
-
-    // Lógica para mostrar/ocultar contraseña
-    togglePasswordBtn.addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.querySelector('i').classList.toggle('fa-eye-slash');
-    });
-
-    // Lógica para la guía visual de requisitos
-    if (passwordInput) {
+    if (passwordInput && reqsContainer) {
         const reqs = {
             length: document.getElementById('req-length'),
             upper: document.getElementById('req-upper'),
             lower: document.getElementById('req-lower'),
             number: document.getElementById('req-number')
         };
-
-        passwordInput.addEventListener('focus', () => {
-            reqsContainer.style.display = 'block';
-        });
-
-        passwordInput.addEventListener('blur', () => {
-            reqsContainer.style.display = 'none';
-        });
-
+        passwordInput.addEventListener('focus', () => { reqsContainer.style.display = 'block'; });
+        passwordInput.addEventListener('blur', () => { reqsContainer.style.display = 'none'; });
         passwordInput.addEventListener('keyup', () => {
             const value = passwordInput.value;
-
-            // Valida Longitud
             validateReq(reqs.length, value.length >= 8);
-            // Valida Mayúscula
             validateReq(reqs.upper, /[A-Z]/.test(value));
-            // Valida Minúscula
             validateReq(reqs.lower, /[a-z]/.test(value));
-            // Valida Número
             validateReq(reqs.number, /[0-9]/.test(value));
         });
-
         function validateReq(element, isValid) {
             const icon = element.querySelector('i');
-            if (isValid) {
-                element.classList.remove('invalid');
-                element.classList.add('valid');
-                icon.classList.remove('fa-times-circle');
-                icon.classList.add('fa-check-circle');
-            } else {
-                element.classList.remove('valid');
-                element.classList.add('invalid');
-                icon.classList.remove('fa-check-circle');
-                icon.classList.add('fa-times-circle');
-            }
+            element.className = isValid ? 'valid' : 'invalid';
+            icon.className = isValid ? 'fas fa-check-circle me-2' : 'fas fa-times-circle me-2';
         }
     }
+
+    // Lógica para validación en tiempo real de campos únicos
+    function setupRealtimeValidation(fieldName, url) {
+        const input = document.getElementById(`id_${fieldName}`);
+        const statusEl = document.getElementById(`${fieldName}-status`);
+        if (!input || !statusEl || !url) return;
+        let debounceTimer;
+        input.addEventListener('keyup', function() {
+            clearTimeout(debounceTimer);
+            const value = this.value;
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            if (value.length < 4) { statusEl.innerHTML = ''; return; }
+            debounceTimer = setTimeout(() => {
+                fetch(`${url}?value=${value}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.is_taken) {
+                            statusEl.innerHTML = '<i class="fas fa-times-circle text-danger" title="Este valor ya está en uso"></i>';
+                        } else {
+                            statusEl.innerHTML = '<i class="fas fa-check-circle text-success" title="Disponible"></i>';
+                        }
+                    });
+            }, 500);
+        });
+    }
+    // No olvides crear estas URLs y vistas si aún no lo has hecho
+    // setupRealtimeValidation('username', "{% url 'check_username' %}");
+    // setupRealtimeValidation('email', "{% url 'check_email' %}");
+    // setupRealtimeValidation('ci', "{% url 'check_ci' %}");
 });
 </script>
 {% endblock %}
