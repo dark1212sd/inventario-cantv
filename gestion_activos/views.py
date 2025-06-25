@@ -17,7 +17,7 @@ import openpyxl
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from io import BytesIO
-
+from xhtml2pdf import pisa
 
 # ==============================================================================
 # VISTAS DE ÍNDICE Y AUTENTICACIÓN

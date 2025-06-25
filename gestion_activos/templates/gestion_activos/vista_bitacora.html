@@ -1,53 +1,75 @@
 {% extends 'gestion_activos/base.html' %}
+{% load static %}
 
 {% block title %}Bitácora de Acciones{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Bitácora de Acciones del Sistema</h1>
-    </div>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Registros de Actividad</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Fecha y Hora</th>
-                            <th>Usuario</th>
-                            <th>Acción</th>
-                            <th>Objeto Modificado</th>
-                            <th>Detalles</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
-                            <td>{{ log.usuario.username|default:"Sistema" }}</td>
-                            <td>
-                                {% if log.accion == 'CREACIÓN' %}
-                                    <span class="badge badge-success">{{ log.get_accion_display }}</span>
-                                {% elif log.accion == 'ACTUALIZACIÓN' %}
-                                    <span class="badge badge-warning">{{ log.get_accion_display }}</span>
-                                {% elif log.accion == 'ELIMINACIÓN' %}
-                                    <span class="badge badge-danger">{{ log.get_accion_display }}</span>
-                                {% else %}
-                                    <span class="badge badge-secondary">{{ log.get_accion_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ log.content_type.model|capfirst }} (ID: {{ log.object_id }})</td>
-                            <td>{{ log.detalles }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-primary fw-bold"><i class="fas fa-history me-2"></i>Bitácora de Acciones del Sistema</h2>
 </div>
+
+<div class="card shadow-sm">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Registros de Actividad</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="tabla-bitacora" class="table table-bordered table-hover" style="width:100%">
+        <thead class="table-light">
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Usuario</th>
+            <th class="text-center">Acción</th>
+            <th>Objeto Modificado</th>
+            <th>Detalles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ log.timestamp|date:"d/m/Y, h:i A" }}</td>
+            <td>{{ log.usuario.username|default:"Sistema" }}</td>
+
+            <td class="text-center">
+              {% if log.accion == log.ACCION_CREACION %}
+                <span class="badge rounded-pill bg-success">{{ log.get_accion_display }}</span>
+              {% elif log.accion == log.ACCION_ACTUALIZACION %}
+                <span class="badge rounded-pill bg-warning text-dark">{{ log.get_accion_display }}</span>
+              {% elif log.accion == log.ACCION_ELIMINACION %}
+                <span class="badge rounded-pill bg-danger">{{ log.get_accion_display }}</span>
+              {% else %}
+                <span class="badge rounded-pill bg-secondary">{{ log.get_accion_display }}</span>
+              {% endif %}
+            </td>
+
+            <td>{{ log.content_type.model|capfirst }} (ID: {{ log.object_id }})</td>
+            <td>{{ log.detalles }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#tabla-bitacora').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        // Ordena por defecto por la primera columna (Fecha y Hora) en orden descendente
+        "order": [[ 0, "desc" ]],
+        dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"t>>' +
+             '<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+    });
+
+    $('.dataTables_filter input')
+      .attr('placeholder', 'Buscar en la bitácora...')
+      .addClass('form-control form-control-sm');
+});
+</script>
 {% endblock %}

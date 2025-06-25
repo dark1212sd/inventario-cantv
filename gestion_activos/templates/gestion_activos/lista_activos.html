@@ -1,123 +1,116 @@
 {% extends 'gestion_activos/base.html' %}
-{% load static %}
 
 {% block title %}Lista de Activos{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="fw-bold text-primary">
-    <i class="fas fa-clipboard-list me-2"></i>Lista de Activos
-  </h2>
-  <div class="d-flex gap-2">
-    <a href="{% url 'registrar_activo' %}" class="btn btn-success btn-sm animate__animated animate__fadeIn">
-      <i class="fas fa-plus"></i> Nuevo Activo
-    </a>
-    <a href="{% url 'reporte_pdf' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}"
-       class="btn btn-danger btn-sm animate__animated animate__fadeIn">
-      <i class="fas fa-file-pdf"></i> PDF
-    </a>
-    <a href="{% url 'exportar_excel' %}?estado={{ estado_seleccionado }}&categoria={{ categoria_seleccionada }}&ubicacion={{ ubicacion_seleccionada }}"
-       class="btn btn-info btn-sm text-white animate__animated animate__fadeIn">
-      <i class="fas fa-file-excel"></i> Excel
-    </a>
-  </div>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Lista de Activos</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'registrar_activo' %}" class="btn btn-sm btn-success shadow-sm me-2">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Nuevo Activo
+        </a>
+        <a href="{% url 'reporte_pdf' %}" class="btn btn-sm btn-danger shadow-sm me-2">
+            <i class="fas fa-file-pdf fa-sm text-white-50"></i> PDF
+        </a>
+        <a href="{% url 'exportar_excel' %}" class="btn btn-sm btn-info shadow-sm text-white">
+            <i class="fas fa-file-excel fa-sm text-white-50"></i> Excel
+        </a>
+    </div>
 </div>
 
-<!-- Filtros -->
-<div class="bg-white shadow-sm rounded p-3 mb-4">
-  <form method="get" class="row g-2">
-    <div class="col-sm-4">
-      <select name="estado" class="form-select">
-        <option value="">📁 Estado</option>
-        <option value="activo" {% if estado_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
-        <option value="inactivo" {% if estado_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
-        <option value="en_mantenimiento" {% if estado_seleccionado == 'en_mantenimiento' %}selected{% endif %}>Mantenimiento</option>
-      </select>
+<div class="card shadow-sm">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Inventario General de Activos</h6>
     </div>
-    <div class="col-sm-4">
-      <select name="categoria" class="form-select">
-        <option value="">📂 Categoría</option>
-        {% for cat in categorias %}
-          <option value="{{ cat.id }}" {% if categoria_seleccionada == cat.id|stringformat:"s" %}selected{% endif %}>
-            {{ cat.nombre }}
-          </option>
-        {% endfor %}
-      </select>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="tabla-activos" class="table table-bordered table-hover" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>Responsable</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activo in activos %}
+                    <tr>
+                        <td>{{ activo.codigo }}</td>
+                        <td>{{ activo.nombre }}</td>
+                        <td>{{ activo.categoria.nombre|default:"N/A" }}</td>
+                        <td>{{ activo.ubicacion.nombre|default:"N/A" }}</td>
+                        <td class="text-center">
+                            {% if activo.estado == 'activo' %}
+                                <span class="badge rounded-pill bg-success">Activo</span>
+                            {% elif activo.estado == 'en_mantenimiento' %}
+                                <span class="badge rounded-pill bg-warning text-dark">Mantenimiento</span>
+                            {% else %}
+                                <span class="badge rounded-pill bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ activo.responsable.username|default:"No asignado" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th></th> <th></th> <th>Categoría</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>Responsable</th>
+                        <th></th> </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-    <div class="col-sm-4">
-      <select name="ubicacion" class="form-select">
-        <option value="">📍 Ubicación</option>
-        {% for ub in ubicaciones %}
-          <option value="{{ ub.id }}" {% if ubicacion_seleccionada == ub.id|stringformat:"s" %}selected{% endif %}>
-            {{ ub.nombre }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-12 text-end mt-2">
-      <button type="submit" class="btn btn-primary btn-sm">
-        <i class="fas fa-filter"></i> Filtrar
-      </button>
-    </div>
-  </form>
-</div>
-
-<!-- Tabla -->
-<div class="table-responsive">
-  <table id="tabla-activos" class="table table-bordered shadow-sm">
-    <thead class="table-primary text-center">
-      <tr>
-        <th>Código</th>
-        <th>Nombre</th>
-        <th>Descripción</th>
-        <th>Categoría</th>
-        <th>Ubicación</th>
-        <th>Estado</th>
-        <th>Responsable</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for activo in activos %}
-        <tr>
-          <td>{{ activo.codigo }}</td>
-          <td>{{ activo.nombre }}</td>
-          <td>{{ activo.descripcion }}</td>
-          <td>{{ activo.categoria.nombre }}</td>
-          <td>{{ activo.ubicacion.nombre }}</td>
-          <td>
-            <span class="badge bg-{{ activo.estado|lower|yesno:'success,danger,warning' }}">
-              {{ activo.get_estado_display }}
-            </span>
-          </td>
-          <td>{{ activo.responsable.username|default:"No asignado" }}</td>
-          <td class="text-center">
-            <a href="{% url 'editar_activo' activo.pk %}" class="btn btn-warning btn-sm">✏️</a>
-            <a href="{% url 'eliminar_activo' activo.pk %}" class="btn btn-danger btn-sm">🗑️</a>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  $(document).ready(function () {
-    const table = $('#tabla-activos').DataTable({
-      language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-      },
-      dom: 'ftip',
+$(document).ready(function() {
+    $('#tabla-activos tfoot th').each(function() {
+        var title = $(this).text();
+        // Añade un input de búsqueda solo a las columnas con título en el footer
+        if (title) {
+            $(this).html('<input type="text" class="form-control form-control-sm" placeholder="Buscar ' + title + '" />');
+        }
     });
 
-    // Estilo personalizado al buscador
-    const input = $('#tabla-activos_filter input');
-    input.attr('placeholder', 'Buscar activo');
-    input.addClass('form-control rounded-pill ps-5');
-    input.before('<i class="fas fa-search position-absolute ms-3 mt-2 text-muted"></i>');
-    $('#tabla-activos_filter').css('position', 'relative');
-  });
+    var table = $('#tabla-activos').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        initComplete: function() {
+            this.api().columns([2, 3, 4, 5]).every(function() { // Columnas: Categoria, Ubicacion, Estado, Responsable
+                var column = this;
+                var select = $('<select class="form-select form-select-sm"><option value="">-- ' + $(column.header()).html() + ' --</option></select>')
+                    .appendTo($(column.footer()).empty())
+                    .on('change', function() {
+                        var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                        column.search(val ? '^' + val + '$' : '', true, false).draw();
+                    });
+
+                column.data().unique().sort().each(function(d, j) {
+                    if(d) { // No añadir opciones vacías
+                        select.append('<option value="' + d + '">' + d + '</option>');
+                    }
+                });
+            });
+        }
+    });
+});
 </script>
 {% endblock %}
