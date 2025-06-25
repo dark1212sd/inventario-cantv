@@ -6,9 +6,12 @@
     #password-reqs li { margin-bottom: 0.25rem; transition: color 0.3s; }
     #password-reqs li.valid { color: #198754; }
     #password-reqs li.invalid { color: #6c757d; }
-    .input-group-text { background-color: #e9ecef; border-left: 0; }
+    .input-group-text { background-color: #f8f9fa; border-left: 0; }
+    .form-control:focus { z-index: 5; } /* Evita que el botón de la contraseña se solape al hacer foco */
 </style>
 {% endblock %}
+
+{% block title %}{{ titulo|default:"Gestionar Usuario" }}{% endblock %}
 
 {% block content %}
 <div class="card shadow-sm">
@@ -28,7 +31,7 @@
         <div class="col-md-6 mb-3">
           <label for="id_username" class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
           <div class="input-group">
-            {{ form.username }}
+            <input type="text" name="username" id="id_username" class="form-control" value="{{ form.username.value|default:'' }}" required>
             <span class="input-group-text" id="username-status"></span>
           </div>
           {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
@@ -36,7 +39,7 @@
         <div class="col-md-6 mb-3">
           <label for="id_email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
           <div class="input-group">
-            {{ form.email }}
+            <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:'' }}" required>
             <span class="input-group-text" id="email-status"></span>
           </div>
           {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
@@ -107,6 +110,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
     // Lógica para mostrar/ocultar contraseña
     const passwordInput = document.getElementById('id_password');
     const togglePasswordBtn = document.getElementById('togglePassword');
@@ -151,11 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
         let debounceTimer;
         input.addEventListener('keyup', function() {
             clearTimeout(debounceTimer);
-            const value = this.value;
+            const value = this.value.trim();
             statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             if (value.length < 4) { statusEl.innerHTML = ''; return; }
             debounceTimer = setTimeout(() => {
-                fetch(`${url}?value=${value}`)
+                // Añadimos el ID del usuario actual si estamos editando, para excluirlo de la búsqueda
+                const userId = '{{ form.instance.pk|default_if_none:"" }}';
+                fetch(`${url}?value=${value}&user_id=${userId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.is_taken) {
@@ -167,10 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500);
         });
     }
-    // No olvides crear estas URLs y vistas si aún no lo has hecho
-    // setupRealtimeValidation('username', "{% url 'check_username' %}");
-    // setupRealtimeValidation('email', "{% url 'check_email' %}");
-    // setupRealtimeValidation('ci', "{% url 'check_ci' %}");
+
+    // Activamos la validación para los campos.
+    // ¡Asegúrate de que las URLs 'check_username', 'check_email' y 'check_ci' existan en tu urls.py!
+    setupRealtimeValidation('username', "{% url 'check_username' %}");
+    setupRealtimeValidation('email', "{% url 'check_email' %}");
+    setupRealtimeValidation('ci', "{% url 'check_ci' %}");
 });
 </script>
 {% endblock %}
