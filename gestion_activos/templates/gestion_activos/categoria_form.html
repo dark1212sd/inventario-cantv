@@ -1,11 +1,42 @@
 {% extends 'gestion_activos/base.html' %}
-{% block title %}{{ titulo }}{% endblock %}
+
+{% block title %}{{ titulo|default:"Gestionar Categoría" }}{% endblock %}
+
 {% block content %}
-  <h1>{{ titulo }}</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-    <a href="{% url 'lista_categorias' %}">Cancelar</a>
-  </form>
+<div class="card shadow-sm">
+  <div class="card-header py-3">
+    <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Gestionar Categoría" }}</h4>
+  </div>
+  <div class="card-body p-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors|striptags }}</div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+          {{ form.nombre.label }} <span class="text-danger">*</span>
+        </label>
+        {{ form.nombre }}
+        {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+          {{ form.descripcion.label }}
+        </label>
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <hr class="mt-4">
+      <div class="text-end">
+          <a href="{% url 'lista_categorias' %}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar Categoría</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

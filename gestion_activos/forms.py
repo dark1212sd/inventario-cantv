@@ -55,14 +55,31 @@ class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
         fields = ['nombre', 'descripcion']
-
+        # Definimos los widgets aquí para añadir las clases de Bootstrap
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+        # Personalizamos las etiquetas para que sean más claras
+        labels = {
+            'nombre': 'Nombre de la Categoría',
+            'descripcion': 'Descripción (Opcional)',
+        }
 
 class UbicacionForm(forms.ModelForm):
     class Meta:
         model = Ubicacion
         fields = ['nombre', 'descripcion']
-
-
+        # Definimos los widgets para añadir las clases de Bootstrap
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+        # Personalizamos las etiquetas para que sean más claras
+        labels = {
+            'nombre': 'Nombre de la Ubicación',
+            'descripcion': 'Descripción (Opcional)',
+        }
 # ==============================================================================
 # FORMULARIOS ESPECÍFICOS PARA EL ROL "USUARIO"
 # ==============================================================================

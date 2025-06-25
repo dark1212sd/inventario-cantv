@@ -13,6 +13,8 @@ from .forms import (
 from .utils.decoradores import grupo_requerido
 from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
+import openpyxl
+from django.template.loader import render_to_string
 
 
 # ==============================================================================
