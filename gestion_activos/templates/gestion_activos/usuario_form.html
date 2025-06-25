@@ -6,8 +6,8 @@
     #password-reqs li { margin-bottom: 0.25rem; transition: color 0.3s; }
     #password-reqs li.valid { color: #198754; }
     #password-reqs li.invalid { color: #6c757d; }
-    .input-group-text { background-color: #f8f9fa; border-left: 0; }
-    .form-control:focus { z-index: 5; } /* Evita que el botón de la contraseña se solape al hacer foco */
+    /* Ajusta el fondo del ícono para que coincida con el campo */
+    .input-group-text { background-color: #f8f9fa; }
 </style>
 {% endblock %}
 
@@ -18,7 +18,7 @@
   <div class="card-header py-3">
     <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Gestionar Usuario" }}</h4>
   </div>
-  <div class="card-body">
+  <div class="card-body p-4">
     <form method="post" id="userForm" novalidate>
       {% csrf_token %}
 
@@ -29,17 +29,17 @@
       <h5 class="mb-3 border-bottom pb-2">Datos de la Cuenta</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-          <label for="id_username" class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
+          <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
           <div class="input-group">
-            <input type="text" name="username" id="id_username" class="form-control" value="{{ form.username.value|default:'' }}" required>
+            {{ form.username }}
             <span class="input-group-text" id="username-status"></span>
           </div>
           {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
         </div>
         <div class="col-md-6 mb-3">
-          <label for="id_email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
+          <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
           <div class="input-group">
-            <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:'' }}" required>
+            {{ form.email }}
             <span class="input-group-text" id="email-status"></span>
           </div>
           {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
@@ -109,6 +109,9 @@
 
 {% block extra_js %}
 <script>
+// El bloque de JavaScript que ya teníamos es compatible con esta estructura
+// y no necesita cambios. Se encarga de la lógica para mostrar/ocultar contraseña
+// y la validación en tiempo real.
 document.addEventListener('DOMContentLoaded', function() {
 
     // Lógica para mostrar/ocultar contraseña
@@ -118,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
         togglePasswordBtn.addEventListener('click', function() {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
     }
@@ -152,16 +156,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById(`id_${fieldName}`);
         const statusEl = document.getElementById(`${fieldName}-status`);
         if (!input || !statusEl || !url) return;
+
         let debounceTimer;
         input.addEventListener('keyup', function() {
             clearTimeout(debounceTimer);
             const value = this.value.trim();
-            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            if (value.length < 4) { statusEl.innerHTML = ''; return; }
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin text-muted"></i>';
+
+            if (value.length < 4) {
+                statusEl.innerHTML = '';
+                return;
+            }
+
             debounceTimer = setTimeout(() => {
-                // Añadimos el ID del usuario actual si estamos editando, para excluirlo de la búsqueda
                 const userId = '{{ form.instance.pk|default_if_none:"" }}';
-                fetch(`${url}?value=${value}&user_id=${userId}`)
+                fetch(`${url}?value=${encodeURIComponent(value)}&user_id=${userId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.is_taken) {
@@ -174,8 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Activamos la validación para los campos.
-    // ¡Asegúrate de que las URLs 'check_username', 'check_email' y 'check_ci' existan en tu urls.py!
+    // Activamos la validación para los campos
     setupRealtimeValidation('username', "{% url 'check_username' %}");
     setupRealtimeValidation('email', "{% url 'check_email' %}");
     setupRealtimeValidation('ci', "{% url 'check_ci' %}");
