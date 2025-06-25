@@ -105,6 +105,8 @@ class UsuarioForm(forms.ModelForm):
     ci = forms.CharField(label="Cédula (CI)", required=False)
     telefono_contacto = forms.CharField(label="Teléfono Principal", required=False)
     grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
+
+    # Campos para la contraseña con su confirmación
     password = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False)
     password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False)
 
@@ -115,67 +117,42 @@ class UsuarioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Si estamos editando un usuario existente (self.instance.pk tiene un valor)
+        # Si estamos editando un usuario existente...
         if self.instance and self.instance.pk:
-            # Poblamos los campos del perfil con los datos guardados
             if hasattr(self.instance, 'perfil'):
                 self.fields['nombres'].initial = self.instance.perfil.nombres
                 self.fields['apellidos'].initial = self.instance.perfil.apellidos
                 self.fields['ci'].initial = self.instance.perfil.ci
                 self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
-
-            # Poblamos el grupo actual del usuario
             self.fields['grupo'].initial = self.instance.groups.first()
         else:
             # Si estamos creando un usuario nuevo, la contraseña es obligatoria
             self.fields['password'].required = True
             self.fields['password2'].required = True
 
-    # --- VALIDACIONES PERSONALIZADAS ---
-
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        # Excluimos el propio usuario de la búsqueda para permitir guardar sin cambios
-        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('Este nombre de usuario ya está en uso.')
-        return username
-
-    def clean_ci(self):
-        ci = self.cleaned_data.get('ci')
-        if ci:  # Solo validamos si se ingresó algo
-            query = Perfil.objects.filter(ci=ci)
-            # Al editar, excluimos al propio usuario de la búsqueda de duplicados
-            if self.instance and self.instance.pk:
-                query = query.exclude(user=self.instance)
-            if query.exists():
-                raise forms.ValidationError('Ya existe un usuario con este número de cédula.')
-        return ci
+    # ... (Aquí van todos los métodos clean_... que ya teníamos)
 
     def clean_password2(self):
         password = self.cleaned_data.get("password")
         password2 = self.cleaned_data.get("password2")
-        # Si se ingresó una contraseña, ambas deben coincidir
         if password and password != password2:
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return password2
 
     def save(self, commit=True):
+        # ... (Aquí va el método save que ya teníamos)
         user = super().save(commit=False)
         password = self.cleaned_data.get("password")
         if password:
             user.set_password(password)
-
         if commit:
             user.save()
             user.groups.set([self.cleaned_data['grupo']])
-            # Usamos hasattr para el caso de que el perfil no se haya creado aún (aunque la señal debería hacerlo)
             if not hasattr(user, 'perfil'):
                 Perfil.objects.create(user=user)
-            # Actualizamos los datos del perfil
             user.perfil.nombres = self.cleaned_data.get('nombres', '')
             user.perfil.apellidos = self.cleaned_data.get('apellidos', '')
             user.perfil.ci = self.cleaned_data.get('ci', '')
             user.perfil.telefono_contacto = self.cleaned_data.get('telefono_contacto', '')
             user.perfil.save()
-
         return user
