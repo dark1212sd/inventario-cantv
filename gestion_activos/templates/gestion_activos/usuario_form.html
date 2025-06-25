@@ -12,48 +12,51 @@
       {% csrf_token %}
 
       {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-          {% for error in form.non_field_errors %}
-            <p class="mb-0">{{ error }}</p>
-          {% endfor %}
-        </div>
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
       {% endif %}
 
       <h5 class="mb-3 border-bottom pb-2">Datos de la Cuenta</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-          <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de Usuario</label>
-          {{ form.username }}
-          {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
+          <label for="id_username" class="form-label">Nombre de Usuario</label>
+          <div class="input-group">
+            {{ form.username }}
+            <span class="input-group-text" id="username-status"></span>
+          </div>
+          <div id="username-errors" class="text-danger small mt-1">{% if form.username.errors %}{{ form.username.errors|striptags }}{% endif %}</div>
         </div>
         <div class="col-md-6 mb-3">
-          <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
-          {{ form.email }}
-          {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
+          <label for="id_email" class="form-label">Correo Electrónico</label>
+          <div class="input-group">
+            {{ form.email }}
+            <span class="input-group-text" id="email-status"></span>
+          </div>
+          <div id="email-errors" class="text-danger small mt-1">{% if form.email.errors %}{{ form.email.errors|striptags }}{% endif %}</div>
         </div>
       </div>
 
       <h5 class="mb-3 mt-4 border-bottom pb-2">Información Personal (Opcional en creación)</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-            <label for="{{ form.nombres.id_for_label }}" class="form-label">Nombres</label>
+            <label class="form-label">Nombres</label>
             {{ form.nombres }}
-            {% if form.nombres.errors %}<div class="text-danger small mt-1">{{ form.nombres.errors|striptags }}</div>{% endif %}
         </div>
         <div class="col-md-6 mb-3">
-            <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos</label>
+            <label class="form-label">Apellidos</label>
             {{ form.apellidos }}
-            {% if form.apellidos.errors %}<div class="text-danger small mt-1">{{ form.apellidos.errors|striptags }}</div>{% endif %}
         </div>
       </div>
       <div class="row">
         <div class="col-md-6 mb-3">
-            <label for="{{ form.ci.id_for_label }}" class="form-label">Cédula (CI)</label>
-            {{ form.ci }}
-            {% if form.ci.errors %}<div class="text-danger small mt-1">{{ form.ci.errors|striptags }}</div>{% endif %}
+            <label for="id_ci" class="form-label">Cédula (CI)</label>
+            <div class="input-group">
+                {{ form.ci }}
+                <span class="input-group-text" id="ci-status"></span>
+            </div>
+            <div id="ci-errors" class="text-danger small mt-1">{% if form.ci.errors %}{{ form.ci.errors|striptags }}{% endif %}</div>
         </div>
         <div class="col-md-6 mb-3">
-            <label for="{{ form.telefono_contacto.id_for_label }}" class="form-label">Teléfono Principal</label>
+            <label class="form-label">Teléfono Principal</label>
             {{ form.telefono_contacto }}
             {% if form.telefono_contacto.errors %}<div class="text-danger small mt-1">{{ form.telefono_contacto.errors|striptags }}</div>{% endif %}
         </div>
@@ -62,22 +65,21 @@
       <h5 class="mb-3 mt-4 border-bottom pb-2">Rol y Contraseña</h5>
       <div class="row">
         <div class="col-md-6 mb-3">
-            <label for="{{ form.grupo.id_for_label }}" class="form-label">Grupo (Rol)</label>
+            <label class="form-label">Grupo (Rol)</label>
             {{ form.grupo }}
-            {% if form.grupo.errors %}<div class="text-danger small mt-1">{{ form.grupo.errors|striptags }}</div>{% endif %}
         </div>
-      </div>
-      <p class="text-muted small">{% if not form.instance.pk %}La contraseña es obligatoria para nuevos usuarios.{% else %}Deja los campos de contraseña en blanco si no deseas cambiarla.{% endif %}</p>
-      <div class="row">
         <div class="col-md-6 mb-3">
-            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</slabel>
+          <label for="id_password" class="form-label">Contraseña</label>
+          <div class="input-group">
             {{ form.password }}
-            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmar Contraseña</label>
-            {{ form.password2 }}
-            {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>{% endif %}
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <div id="password-help" class="form-text text-muted small" style="display: none;">
+            {{ form.password.help_text }}
+          </div>
+          <div class="text-danger small mt-1">{% if form.password.errors %}{{ form.password.errors|striptags }}{% endif %}</div>
         </div>
       </div>
 
@@ -89,4 +91,64 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // --- Lógica para mostrar/ocultar contraseña ---
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword) {
+        const passwordInput = document.getElementById('id_password');
+        const passwordHelp = document.getElementById('password-help');
+
+        passwordInput.addEventListener('focus', () => { passwordHelp.style.display = 'block'; });
+        passwordInput.addEventListener('blur', () => { passwordHelp.style.display = 'none'; });
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+    }
+
+    // --- Lógica para validación en tiempo real ---
+    function setupRealtimeValidation(fieldName, url) {
+        const input = document.getElementById(`id_${fieldName}`);
+        const statusEl = document.getElementById(`${fieldName}-status`);
+        if (!input || !statusEl) return;
+
+        let debounceTimer;
+        input.addEventListener('keyup', function() {
+            clearTimeout(debounceTimer);
+            const value = this.value;
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Muestra un spinner
+
+            if (value.length < 4) {
+                statusEl.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`${url}?value=${value}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.is_taken) {
+                            statusEl.innerHTML = '<i class="fas fa-times-circle text-danger" title="Este valor ya está en uso"></i>';
+                            input.classList.add('is-invalid');
+                        } else {
+                            statusEl.innerHTML = '<i class="fas fa-check-circle text-success" title="Disponible"></i>';
+                            input.classList.remove('is-invalid');
+                        }
+                    });
+            }, 500); // Espera 500ms después de que el usuario deja de teclear
+        });
+    }
+
+    setupRealtimeValidation('username', "{% url 'check_username' %}");
+    setupRealtimeValidation('email', "{% url 'check_email' %}");
+    setupRealtimeValidation('ci', "{% url 'check_ci' %}");
+});
+</script>
 {% endblock %}

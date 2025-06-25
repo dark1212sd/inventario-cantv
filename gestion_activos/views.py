@@ -626,20 +626,25 @@ def ver_perfil(request):
     }
     return render(request, 'gestion_activos/perfil.html', context)
 
-
 def check_username_availability(request):
+    """Verifica si un nombre de usuario ya está en uso."""
     username = request.GET.get('value', None)
+    # la búsqueda 'iexact' no distingue mayúsculas de minúsculas
     is_taken = User.objects.filter(username__iexact=username).exists()
     return JsonResponse({'is_taken': is_taken})
 
-
 def check_email_availability(request):
+    """Verifica si un email ya está en uso."""
     email = request.GET.get('value', None)
+    if not email:
+        return JsonResponse({'is_taken': False})
     is_taken = User.objects.filter(email__iexact=email).exists()
     return JsonResponse({'is_taken': is_taken})
 
-
 def check_ci_availability(request):
+    """Verifica si una cédula ya está en uso."""
     ci = request.GET.get('value', None)
+    if not ci:
+        return JsonResponse({'is_taken': False})
     is_taken = Perfil.objects.filter(ci=ci).exists()
     return JsonResponse({'is_taken': is_taken})
