@@ -1,11 +1,33 @@
-{% extends "gestion_activos/base.html" %}
+{% extends 'gestion_activos/base.html' %}
 
-{% block title %}Acceso Denegado{% endblock %}
+{% block page_title %}
+    <i class="fas fa-ban me-2"></i>Acceso Denegado
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5 text-center">
-    <h1 class="text-danger">Acceso Denegado</h1>
-    <p class="lead">No tienes permisos para acceder a esta sección.</p>
-    <a href="{% url 'lista_activos' %}" class="btn btn-outline-secondary mt-3">Volver al inicio</a>
+<div class="row justify-content-center mt-5">
+    <div class="col-lg-7 col-md-9">
+        <div class="card shadow-sm text-center p-4 border-left-danger">
+            <div class="card-body">
+                <span class="fa-stack fa-4x mb-3 text-danger">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-lock fa-stack-1x fa-inverse"></i>
+                </span>
+                <h2 class="text-danger mb-3">Acceso Denegado</h2>
+                <p class="lead text-gray-800">
+                  Lo sentimos, no tienes los permisos necesarios para acceder a esta sección.
+                </p>
+                <p class="text-muted">
+                  Si crees que esto es un error, por favor, contacta al administrador del sistema.
+                </p>
+
+                <hr class="my-4">
+
+                <a href="{% url 'index' %}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Volver al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

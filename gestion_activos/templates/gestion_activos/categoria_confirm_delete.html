@@ -1,9 +1,38 @@
 {% extends 'gestion_activos/base.html' %}
-{% block title %}Eliminar Categoría{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-trash-alt me-2"></i>Confirmar Eliminación de Categoría
+{% endblock %}
+
 {% block content %}
-  <h1>Eliminar Categoría</h1>
-  <p>¿Eliminar "{{ obj.nombre }}"?</p>
-  <form method="post">{% csrf_token %}<button type="submit">Sí, eliminar</button>
-  <a href="{% url 'lista_categorias' %}">Cancelar</a>
-  </form>
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm text-center p-4">
+            <div class="card-body">
+                <span class="fa-stack fa-4x mb-3 text-danger">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-layer-group fa-stack-1x fa-inverse"></i>
+                </span>
+                <h2 class="text-danger mb-3">¿Estás seguro?</h2>
+                <p class="lead">
+                  Estás a punto de eliminar permanentemente la categoría:
+                </p>
+
+                <div class="alert alert-warning my-4">
+                  <h4 class="alert-heading mb-0">{{ object.nombre }}</h4>
+                </div>
+
+                <p class="text-muted">
+                  Eliminar una categoría puede afectar a los activos que la estén utilizando. Esta acción no se puede deshacer.
+                </p>
+
+                <form method="post" class="mt-4">
+                  {% csrf_token %}
+                  <a href="{% url 'lista_categorias' %}" class="btn btn-secondary me-2">Cancelar</a>
+                  <button type="submit" class="btn btn-danger">Sí, Eliminar Categoría</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

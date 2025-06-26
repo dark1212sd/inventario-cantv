@@ -1,10 +1,39 @@
 {% extends 'gestion_activos/base.html' %}
-{% block title %}Eliminar Activo{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-trash-alt me-2"></i>Confirmar Eliminación de Activo
+{% endblock %}
+
 {% block content %}
-  <h1>¿Eliminar "{{ obj.nombre }}"?</h1>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-    <a href="{% url 'lista_activos' %}" class="btn btn-secondary">Cancelar</a>
-  </form>
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm text-center p-4">
+            <div class="card-body">
+                <span class="fa-stack fa-4x mb-3 text-danger">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-exclamation-triangle fa-stack-1x fa-inverse"></i>
+                </span>
+                <h2 class="text-danger mb-3">¿Estás realmente seguro?</h2>
+                <p class="lead">
+                  Estás a punto de eliminar permanentemente el activo:
+                </p>
+
+                <div class="alert alert-warning my-4">
+                  <h4 class="alert-heading mb-0">{{ object.nombre }}</h4>
+                  <p class="mb-0 small text-muted">Código: {{ object.codigo }}</p>
+                </div>
+
+                <p class="text-muted">
+                  Esta acción no se puede deshacer y el activo será borrado de la base de datos.
+                </p>
+
+                <form method="post" class="mt-4">
+                  {% csrf_token %}
+                  <a href="{% url 'lista_activos' %}" class="btn btn-secondary me-2">Cancelar y Volver</a>
+                  <button type="submit" class="btn btn-danger">Sí, Eliminar Permanentemente</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

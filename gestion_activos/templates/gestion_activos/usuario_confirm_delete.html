@@ -1,16 +1,41 @@
 {% extends 'gestion_activos/base.html' %}
-{% block title %}Eliminar Usuario{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-user-times me-2"></i>Confirmar Eliminación de Usuario
+{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4">
-  <h2 class="text-danger mb-4">¿Estás seguro de eliminar este usuario?</h2>
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm text-center p-4">
+            <div class="card-body">
+                <span class="fa-stack fa-4x mb-3 text-danger">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-user-slash fa-stack-1x fa-inverse"></i>
+                </span>
+                <h2 class="text-danger mb-3">¿Estás seguro?</h2>
+                <p class="lead">
+                  Estás a punto de eliminar permanentemente al usuario:
+                </p>
 
-  <p><strong>{{ obj.username }}</strong> ({{ obj.first_name }} {{ obj.last_name }})</p>
+                <div class="alert alert-warning my-4">
+                  <h4 class="alert-heading mb-0">{{ object.username }}</h4>
+                  {% if object.get_full_name %}
+                    <p class="mb-0">({{ object.get_full_name }})</p>
+                  {% endif %}
+                </div>
 
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Eliminar</button>
-    <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
-  </form>
+                <p class="text-muted">
+                  Esta acción no se puede deshacer.
+                </p>
+
+                <form method="post" class="mt-4">
+                  {% csrf_token %}
+                  <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary me-2">Cancelar</a>
+                  <button type="submit" class="btn btn-danger">Sí, Eliminar Usuario</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
