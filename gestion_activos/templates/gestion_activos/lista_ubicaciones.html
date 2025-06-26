@@ -51,6 +51,7 @@
 {% block extra_js %}
 <script>
 $(document).ready(function () {
+    // Inicializamos DataTables con la configuración correcta y responsiva
     $('#tabla-ubicaciones').DataTable({
         responsive: true,
         language: {
@@ -60,10 +61,12 @@ $(document).ready(function () {
              '<"row"<"col-sm-12"t>>' +
              '<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         "columnDefs": [
+            // Desactiva la capacidad de ordenar por la columna de acciones
             { "orderable": false, "targets": 'no-sort' }
         ]
     });
 
+    // Personaliza el campo de búsqueda para que se vea como en el resto del sistema
     $('.dataTables_filter input')
       .attr('placeholder', 'Buscar...')
       .addClass('form-control form-control-sm');
