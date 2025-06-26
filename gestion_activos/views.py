@@ -142,10 +142,27 @@ def editar_perfil_staff(request):
 @login_required
 @grupo_requerido('Administrador', 'Supervisor', 'Técnico', 'Auditor')
 def lista_activos(request):
-    """Muestra la lista general de todos los activos con filtros."""
-    # Lógica de filtrado...
-    activos = Activo.objects.all()
-    return render(request, 'gestion_activos/lista_activos.html', {'activos': activos})
+    """Muestra la lista general de todos los activos con filtros externos."""
+    activos = Activo.objects.select_related('categoria', 'ubicacion', 'responsable').all()
+
+    # Preparamos los datos para los filtros desplegables
+    categorias = Categoria.objects.all().order_by('nombre')
+    ubicaciones = Ubicacion.objects.all().order_by('nombre')
+
+    # Obtenemos las opciones de estado directamente del modelo para asegurar consistencia
+    estados = [{'valor': e[0], 'texto': e[1]} for e in Activo._meta.get_field('estado').choices]
+
+    # Obtenemos los usuarios que son responsables de al menos un activo
+    responsables = User.objects.filter(activos_responsables__isnull=False).distinct().order_by('username')
+
+    context = {
+        'activos': activos,
+        'filtro_categorias': categorias,
+        'filtro_ubicaciones': ubicaciones,
+        'filtro_estados': estados,
+        'filtro_responsables': responsables,
+    }
+    return render(request, 'gestion_activos/lista_activos.html', context)
 # --- CRUD de Activos ---
 @login_required
 @grupo_requerido("Técnico", "Administrador")
