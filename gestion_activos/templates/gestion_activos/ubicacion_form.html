@@ -1,6 +1,7 @@
 {% extends 'gestion_activos/base.html' %}
-{% block title %}{{ titulo }}{% endblock %}
-
+{% block page_title %}
+    {{ titulo|default:"Gestionar Ubicación" }}
+{% endblock %}
 {% block content %}
 <div class="card shadow-sm p-4">
   <h2 class="text-primary mb-4">{{ titulo }}</h2>

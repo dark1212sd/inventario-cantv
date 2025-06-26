@@ -1,11 +1,14 @@
 {% extends 'gestion_activos/base.html' %}
+{% block page_title %}
+    <i class="fas fa-location-dot me-2"></i>Gestión de ubicaciones
+{% endblock %}
+
 {% load static %}
 
 {% block title %}Ubicaciones{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="text-primary"><i class="fas fa-map-marker-alt"></i> Ubicaciones</h2>
   <a href="{% url 'crear_ubicacion' %}" class="btn btn-success">
     <i class="fas fa-plus-circle"></i> Nueva Ubicación
   </a>

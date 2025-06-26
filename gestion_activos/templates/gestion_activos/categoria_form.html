@@ -1,5 +1,7 @@
 {% extends 'gestion_activos/base.html' %}
-
+{% block page_title %}
+    {{ titulo|default:"Gestionar Categoría" }}
+{% endblock %}
 {% block title %}{{ titulo|default:"Gestionar Categoría" }}{% endblock %}
 
 {% block content %}

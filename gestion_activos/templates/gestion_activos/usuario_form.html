@@ -1,5 +1,7 @@
 {% extends 'gestion_activos/base.html' %}
-
+{% block page_title %}
+    {{ titulo|default:"Gestionar Ubicación" }}
+{% endblock %}
 {% block extra_head %}
 <style>
     #password-reqs { display: none; padding-left: 0; list-style-type: none; font-size: 0.875em; }
