@@ -7,10 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}Inventario CANTV{% endblock %}</title>
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 
@@ -18,41 +16,40 @@
         :root {
             --sidebar-width: 250px;
             --topbar-height: 60px;
-            --sidebar-bg: #2c3e50;
-            --sidebar-link-hover: #34495e;
+            --sidebar-bg: #212529;
+            --sidebar-link-hover: #343a40;
             --sidebar-link-active: #0d6efd;
-            --page-bg-color: #f8f9fc;
+            --page-bg-color: #f0f2f5;
         }
-
         body {
             background-color: var(--page-bg-color);
-            font-family: 'Nunito', sans-serif;
-            padding-top: var(--topbar-height); /* Espacio para la barra superior fija */
+            padding-top: var(--topbar-height);
         }
-
         .topbar {
             height: var(--topbar-height);
             background-color: #fff;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, .15) !important;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, .15);
             z-index: 1030;
         }
-
+        .topbar .page-title {
+            color: #4e73df;
+            font-weight: 700;
+        }
         .sidebar {
             position: fixed;
             top: 0;
-            left: 0;
+            right: 0;
+            transform: translateX(100%); /* Oculto a la derecha por defecto */
             width: var(--sidebar-width);
             height: 100vh;
             background-color: var(--sidebar-bg);
-            transform: translateX(-100%); /* Oculto por defecto a la izquierda */
+            color: #fff;
             transition: transform 0.3s ease-in-out;
             z-index: 1045;
         }
-
         .sidebar.show {
-            transform: translateX(0); /* Visible */
+            transform: translateX(0); /* Se desliza a la vista */
         }
-
         .sidebar-brand {
             height: var(--topbar-height);
             display: flex;
@@ -68,72 +65,57 @@
             align-items: center;
             transition: all 0.2s;
         }
-
         .sidebar .nav-link .fa-fw {
             width: 1.25em;
             margin-right: 0.75rem;
         }
-
         .sidebar .nav-link:hover {
             color: #fff;
             background-color: var(--sidebar-link-hover);
+            transform: scale(1.02) translateX(-3px); /* Efecto de animación */
         }
-
         .sidebar .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 1.75rem;
-            background: none;
-            border: none;
+            position: absolute; top: 10px; right: 15px;
+            font-size: 1.75rem; background: none; border: none;
             color: rgba(255,255,255,0.7);
         }
         .sidebar .close-btn:hover { color: #fff; }
-
         .sidebar-backdrop {
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 1044;
             display: none;
         }
         .sidebar-backdrop.show { display: block; }
-
-        .page-title {
-            color: #4e73df;
-            font-weight: 700;
-        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-
     <nav class="navbar navbar-expand navbar-light bg-white topbar fixed-top shadow px-3">
-        <button id="sidebarToggleBtn" class="btn btn-link d-md-none rounded-circle me-3">
-            <i class="fa fa-bars"></i>
-        </button>
-        <button id="sidebarToggleDesktopBtn" class="btn btn-primary d-none d-md-block">
-            <i class="fa fa-bars"></i> Menú
-        </button>
-
-        <div class="d-none d-sm-inline-block ms-4">
-            <h1 class="h4 mb-0 page-title">
-                {% block page_title %}Dashboard{% endblock %}
-            </h1>
-        </div>
-
-        <ul class="navbar-nav ms-auto">
-            <li class="nav-item dropdown no-arrow">
+        <ul class="navbar-nav me-auto">
+             <li class="nav-item dropdown no-arrow">
                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="me-2 d-none d-lg-inline text-gray-600 small">{{ user.username }}</span>
-                    <i class="fas fa-user-circle fa-fw fa-lg"></i>
+                    <i class="fas fa-user-circle fa-fw fa-lg me-2"></i>
+                    <span class="d-none d-lg-inline text-gray-600 small">{{ user.username }}</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+                <div class="dropdown-menu shadow animated--grow-in" aria-labelledby="userDropdown">
                     <a class="dropdown-item" href="{% url 'logout' %}">
                         <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i> Cerrar sesión
                     </a>
                 </div>
+            </li>
+        </ul>
+
+        <h1 class="h4 mb-0 page-title d-none d-md-block">
+            {% block page_title %}Dashboard{% endblock %}
+        </h1>
+
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <button class="btn btn-primary" id="sidebarToggleBtn" type="button" title="Menú">
+                    <i class="fas fa-bars"></i>
+                </button>
             </li>
         </ul>
     </nav>
@@ -141,7 +123,7 @@
     <nav id="sidebar" class="sidebar">
         <div class="sidebar-brand">
             <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/logo_menu_xsf9gl.png" alt="Logo CANTV">
-            <button class="close-btn" id="sidebarCloseBtn">&times;</button>
+            <button class="close-btn" id="sidebarCloseBtn" title="Cerrar menú">&times;</button>
         </div>
         <hr class="text-secondary my-0">
         <ul class="nav flex-column pt-3">
@@ -160,7 +142,7 @@
 
     <div id="django-messages" style="display: none;">
       {% if messages %}{% for message in messages %}
-        <div class="django-message" data-tag="{{ message.tags }}" data-message="{{ message }}"></div>
+        <div class="django-message" data-tag="{{ message.tags }}" data-message="{{ message|escapejs }}"></div>
       {% endfor %}{% endif %}
     </div>
 
@@ -170,50 +152,36 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- Lógica para la nueva barra lateral ---
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebarBackdrop');
-        const openBtn = document.getElementById('sidebarToggleDesktopBtn');
-        const openBtnMobile = document.getElementById('sidebarToggleTop');
+        const openBtn = document.getElementById('sidebarToggleBtn');
         const closeBtn = document.getElementById('sidebarCloseBtn');
 
-        function openSidebar() {
-            sidebar.classList.add('show');
-            backdrop.classList.add('show');
-        }
-        function closeSidebar() {
-            sidebar.classList.remove('show');
-            backdrop.classList.remove('show');
-        }
+        function toggleSidebar() { sidebar.classList.toggle('show'); backdrop.classList.toggle('show'); }
 
-        openBtn.addEventListener('click', openSidebar);
-        openBtnMobile.addEventListener('click', openSidebar);
-        closeBtn.addEventListener('click', closeSidebar);
-        backdrop.addEventListener('click', closeSidebar);
+        if(openBtn) { openBtn.addEventListener('click', toggleSidebar); }
+        if(closeBtn) { closeBtn.addEventListener('click', toggleSidebar); }
+        if(backdrop) { backdrop.addEventListener('click', toggleSidebar); }
 
-        // Lógica para SweetAlert2
+        // --- Lógica para las notificaciones SweetAlert2 ---
         const messages = document.querySelectorAll('.django-message');
         if (messages.length > 0) {
             const messageEl = messages[0];
             const messageText = messageEl.dataset.message;
             const messageTag = messageEl.dataset.tag;
             let iconType = 'info', titleText = 'Notificación';
-
             if (messageTag.includes('success')) { iconType = 'success'; titleText = '¡Éxito!'; }
             else if (messageTag.includes('error')) { iconType = 'error'; titleText = 'Error'; }
             else if (messageTag.includes('warning')) { iconType = 'warning'; titleText = 'Advertencia'; }
-
             Swal.fire({
                 title: titleText,
                 text: messageText,
                 icon: iconType,
-                timer: 3000,
-                timerProgressBar: true,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
+                timer: 3000, timerProgressBar: true, toast: true,
+                position: 'top-end', showConfirmButton: false,
             });
         }
     });
