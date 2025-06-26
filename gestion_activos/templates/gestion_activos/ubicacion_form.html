@@ -1,33 +1,41 @@
 {% extends 'gestion_activos/base.html' %}
+
 {% block page_title %}
-    <i class="fas fa-layer-group me-2"></i>Creación De Ubicaciones
+    <i class="fas fa-location-dot me-2"></i>{{ titulo|default:"Creación de Nueva Ubicación" }}
 {% endblock %}
+
 {% block content %}
-<div class="card shadow-sm p-4">
-  <h2 class="text-primary mb-4">{{ titulo }}</h2>
+<div class="card shadow-sm">
+  <div class="card-body p-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
 
-  <form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-      <label for="id_nombre" class="form-label">Nombre de la Ubicación</label>
-      <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="id_nombre" name="nombre" value="{{ form.nombre.value }}" required>
-      {% for error in form.nombre.errors %}
-        <div class="invalid-feedback">{{ error }}</div>
-      {% endfor %}
-    </div>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors|striptags }}</div>
+      {% endif %}
 
-    <div class="mb-3">
-      <label for="id_descripcion" class="form-label">Descripción</label>
-      <textarea class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}" id="id_descripcion" name="descripcion" rows="4">{{ form.descripcion.value }}</textarea>
-      {% for error in form.descripcion.errors %}
-        <div class="invalid-feedback">{{ error }}</div>
-      {% endfor %}
-    </div>
+      <div class="mb-3">
+        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+          Nombre de la Ubicación <span class="text-danger">*</span>
+        </label>
+        {{ form.nombre }}
+        {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|striptags }}</div>{% endif %}
+      </div>
 
-    <div class="d-flex justify-content-between">
-      <button type="submit" class="btn btn-success">{{ titulo }}</button>
-      <a href="{% url 'lista_ubicaciones' %}" class="btn btn-secondary">Cancelar</a>
-    </div>
-  </form>
+      <div class="mb-3">
+        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+          Descripción (Opcional)
+        </label>
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <hr class="mt-4">
+      <div class="text-end">
+          <a href="{% url 'lista_ubicaciones' %}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar Ubicación</button>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

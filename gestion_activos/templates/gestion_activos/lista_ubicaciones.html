@@ -1,58 +1,73 @@
 {% extends 'gestion_activos/base.html' %}
+
 {% block page_title %}
-    <i class="fas fa-location-dot me-2"></i>Gestión De Ubicaciones
+    <i class="fas fa-location-dot me-2"></i>Gestión de Ubicaciones
 {% endblock %}
 
-{% load static %}
-
-{% block title %}Ubicaciones{% endblock %}
-
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <a href="{% url 'crear_ubicacion' %}" class="btn btn-success">
-    <i class="fas fa-plus-circle"></i> Nueva Ubicación
-  </a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div></div> <a href="{% url 'crear_ubicacion' %}" class="btn btn-sm btn-success shadow-sm">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Ubicación
+    </a>
 </div>
 
-<div class="table-responsive">
-  <table id="tabla-ubicaciones" class="table table-bordered table-striped" style="background-color: #e8f8f5;">
-    <thead class="table-dark">
-      <tr>
-        <th>Nombre</th>
-        <th>Descripción</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for ub in ubicaciones %}
-      <tr>
-        <td>{{ ub.nombre }}</td>
-        <td>{{ ub.descripcion }}</td>
-        <td>
-          <a href="{% url 'editar_ubicacion' ub.pk %}" class="btn btn-sm btn-warning">✏️</a>
-          <a href="{% url 'eliminar_ubicacion' ub.pk %}" class="btn btn-sm btn-danger">🗑️</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="tabla-ubicaciones" class="table table-hover table-bordered dt-responsive nowrap" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th class="text-center no-sort">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="align-middle">
+                    {% for ubi in ubicaciones %}
+                    <tr>
+                        <td><strong>{{ ubi.nombre }}</strong></td>
+                        <td>{{ ubi.descripcion|default:'<span class="text-muted fst-italic">Sin descripción</span>'|safe }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'editar_ubicacion' ubi.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{% url 'eliminar_ubicacion' ubi.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No hay ubicaciones registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  $(document).ready(function () {
+$(document).ready(function () {
     $('#tabla-ubicaciones').DataTable({
-      language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-      },
-      initComplete: function () {
-        $('#tabla-ubicaciones_filter input')
-          .addClass('form-control ms-2 animated-search')
-          .attr('placeholder', '🔍 Buscar ubicación')
-          .css('width', '250px');
-      }
+        responsive: true, // Se adapta a pantallas pequeñas
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"t>>' +
+             '<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        "columnDefs": [
+            { "orderable": false, "targets": 'no-sort' } // Desactiva el ordenamiento en la columna de acciones
+        ]
     });
-  });
+
+    // Personaliza el campo de búsqueda
+    $('.dataTables_filter input')
+      .attr('placeholder', 'Buscar...')
+      .addClass('form-control form-control-sm');
+});
 </script>
 {% endblock %}

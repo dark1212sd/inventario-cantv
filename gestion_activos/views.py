@@ -342,20 +342,14 @@ def crear_ubicacion(request):
     if request.method == 'POST':
         form = UbicacionForm(request.POST)
         if form.is_valid():
-            nueva_ubicacion = form.save()
-            LogAccion.objects.create(
-                usuario=request.user,
-                accion=LogAccion.ACCION_CREACION,
-                content_type=ContentType.objects.get_for_model(nueva_ubicacion),
-                object_id=nueva_ubicacion.id,
-                detalles=f'Se creó la ubicación: {nueva_ubicacion.nombre}'
-            )
+            form.save()
+            # Añadimos el mensaje de éxito para SweetAlert2
             messages.success(request, 'Ubicación creada correctamente.')
             return redirect('lista_ubicaciones')
     else:
         form = UbicacionForm()
-    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form})
-
+    # Pasamos el título para que la plantilla lo muestre
+    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form, 'titulo': 'Crear Nueva Ubicación'})
 
 @login_required
 @grupo_requerido("Administrador")
@@ -365,20 +359,14 @@ def editar_ubicacion(request, pk):
     if request.method == 'POST':
         form = UbicacionForm(request.POST, instance=ubicacion)
         if form.is_valid():
-            ubicacion_actualizada = form.save()
-            LogAccion.objects.create(
-                usuario=request.user,
-                accion=LogAccion.ACCION_ACTUALIZACION,
-                content_type=ContentType.objects.get_for_model(ubicacion_actualizada),
-                object_id=ubicacion_actualizada.id,
-                detalles=f'Se actualizó la ubicación: {ubicacion_actualizada.nombre}'
-            )
-            messages.success(request, 'Ubicación actualizada correctamente.')
+            form.save()
+            # Añadimos el mensaje de éxito para SweetAlert2
+            messages.success(request, f'Ubicación "{ubicacion.nombre}" actualizada correctamente.')
             return redirect('lista_ubicaciones')
     else:
         form = UbicacionForm(instance=ubicacion)
-    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form})
-
+    # Pasamos el título para la plantilla
+    return render(request, 'gestion_activos/ubicacion_form.html', {'form': form, 'titulo': f'Editar Ubicación: {ubicacion.nombre}'})
 
 @login_required
 @grupo_requerido("Administrador")
@@ -386,19 +374,12 @@ def eliminar_ubicacion(request, pk):
     """Elimina una ubicación."""
     ubicacion = get_object_or_404(Ubicacion, pk=pk)
     if request.method == 'POST':
-        LogAccion.objects.create(
-            usuario=request.user,
-            accion=LogAccion.ACCION_ELIMINACION,
-            content_type=ContentType.objects.get_for_model(ubicacion),
-            object_id=ubicacion.id,
-            detalles=f'Se eliminó la ubicación: {ubicacion.nombre}'
-        )
+        nombre_ubicacion = ubicacion.nombre
         ubicacion.delete()
-        messages.success(request, 'Ubicación eliminada correctamente.')
+        # Añadimos el mensaje de éxito para SweetAlert2
+        messages.success(request, f'Ubicación "{nombre_ubicacion}" eliminada correctamente.')
         return redirect('lista_ubicaciones')
     return render(request, 'gestion_activos/ubicacion_confirm_delete.html', {'object': ubicacion})
-
-
 # --- CRUD de Usuarios ---
 
 @login_required
