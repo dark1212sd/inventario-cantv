@@ -3,11 +3,18 @@
 {% block extra_head %}
 <style>
     /* Estilos para los filtros en el encabezado */
-    #tabla-activos thead input,
-    #tabla-activos thead select {
+    #tabla-activos thead .filters input,
+    #tabla-activos thead .filters select {
         width: 100%;
         padding: 0.25rem 0.5rem;
-        font-size: 0.8em;
+        font-size: 0.8rem;
+        font-weight: normal;
+    }
+    /* Mejora visual de los badges de estado */
+    .status-badge {
+        font-size: 0.75em;
+        font-weight: 700;
+        padding: 0.35em 0.65em;
     }
 </style>
 {% endblock %}
@@ -16,7 +23,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Inventario General de Activos</h1>
+    <h1 class="h2 text-primary fw-bold"><i class="fas fa-clipboard-list me-2"></i>Inventario General de Activos</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="{% url 'registrar_activo' %}" class="btn btn-sm btn-success shadow-sm me-2">
             <i class="fas fa-plus fa-sm text-white-50"></i> Nuevo Activo
@@ -43,7 +50,7 @@
                         <th>Estado</th>
                         <th>Responsable</th>
                         <th>Fecha de Registro</th>
-                        <th class="text-center">Acciones</th>
+                        <th class="text-center no-sort">Acciones</th>
                     </tr>
                     <tr class="filters">
                         <th></th> <th></th> <th></th> <th></th> <th></th> <th></th> <th></th> <th></th> </tr>
@@ -57,11 +64,11 @@
                         <td>{{ activo.ubicacion.nombre|default:"N/A" }}</td>
                         <td class="text-center">
                             {% if activo.estado == 'activo' %}
-                                <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle">Activo</span>
+                                <span class="badge rounded-pill status-badge bg-success-subtle text-success-emphasis border border-success-subtle">Activo</span>
                             {% elif activo.estado == 'en_mantenimiento' %}
-                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">Mantenimiento</span>
+                                <span class="badge rounded-pill status-badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Mantenimiento</span>
                             {% else %}
-                                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inactivo</span>
+                                <span class="badge rounded-pill status-badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inactivo</span>
                             {% endif %}
                         </td>
                         <td>{{ activo.responsable.username|default:"No asignado" }}</td>
@@ -82,48 +89,53 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    // Prepara los filtros de texto en la segunda fila del encabezado
+    // Prepara los filtros en la segunda fila del encabezado
     $('#tabla-activos thead .filters th').each(function() {
         var title = $('#tabla-activos thead tr:eq(0) th').eq($(this).index()).text();
-        // Añade un input de texto solo si la celda no tiene un filtro de select asignado más abajo
-        if ($(this).index() < 2 || $(this).index() > 5) { // Para Código y Nombre
-             $(this).html('<input type="text" class="form-control form-control-sm" placeholder="Buscar..." />');
+        if (title && !$(this).parent().parent().find('th').eq($(this).index()).hasClass('no-sort')) {
+            $(this).html('<input type="text" class="form-control form-control-sm" placeholder="Buscar ' + title + '" />');
         }
     });
 
     var table = $('#tabla-activos').DataTable({
-        responsive: true, // Activa la extensión Responsive
+        responsive: true,
         language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
-        orderCellsTop: true, // Le dice a DataTables que el ordenamiento se basa en la primera fila del thead
+        orderCellsTop: true,
         fixedHeader: true,
         initComplete: function() {
             var api = this.api();
-            api.columns([2, 3, 4, 5]).every(function(colIdx) { // Columnas: Categoría, Ubicación, Estado, Responsable
+            api.columns([2, 3, 4, 5]).every(function(colIdx) {
                 var column = this;
-                var select = $('<select class="form-select form-select-sm"><option value=""></option></select>')
-                    .appendTo($(column.header()).parent().find('th').eq(colIdx))
+                var header = $(column.header()).parent().parent().find('th').eq(colIdx);
+                var select = $('<select class="form-select form-select-sm"><option value="">Todo ' + header.text() + '</option></select>')
+                    .appendTo($(column.header()).parent().find('th').eq(colIdx).empty())
                     .on('change', function() {
                         var val = $.fn.dataTable.util.escapeRegex($(this).val());
                         column.search(val ? '^' + val + '$' : '', true, false).draw();
                     });
 
                 column.data().unique().sort().each(function(d, j) {
-                    if (d) {
-                        select.append('<option value="' + d + '">' + d + '</option>');
-                    }
+                    if (d) { select.append('<option value="' + d + '">' + d + '</option>'); }
                 });
             });
-        }
+        },
+        // Desactiva el ordenamiento en la columna de 'Acciones'
+        "columnDefs": [
+            { "orderable": false, "targets": 'no-sort' }
+        ]
     });
 
     // Aplica la búsqueda de los inputs de texto
     table.columns().every(function() {
         var that = this;
-        $('input', this.header().parentElement.querySelector('.filters th:nth-child(' + (this.index() + 1) + ')')).on('keyup change clear', function() {
-            if (that.search() !== this.value) {
-                that.search(this.value).draw();
-            }
-        });
+        var input = $('input', this.header().parentElement.querySelector('.filters th:nth-child(' + (this.index() + 1) + ')'));
+        if (input.length > 0) {
+            input.on('keyup change clear', function() {
+                if (that.search() !== this.value) {
+                    that.search(this.value).draw();
+                }
+            });
+        }
     });
 });
 </script>
