@@ -5,140 +5,60 @@
   <meta charset="UTF-8">
   <title>{% block title %}Sistema de Activos{% endblock %}</title>
 
-  <!-- Bootstrap & FontAwesome & Animate.css -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
-  <!-- DataTables CSS (si lo usas) -->
-  <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 
-  <!-- Tu CSS -->
   <link href="{% static 'css/styles.css' %}" rel="stylesheet">
 
-  <style>
-    /* Solo aplicamos este CSS cuando NO es la vista de login */
-    {% if request.resolver_match.url_name != 'login' %}
-    body {
-      margin: 0; overflow-x: hidden;
-    }
-    /* Sidebar a la derecha */
-    .sidebar {
-      position: fixed;
-      top: 0; right: 0;
-      width: 240px; height: 100vh;
-      background: rgba(33,37,41,0.95);
-      color: #fff; padding-top: 60px;
-      transition: width 0.3s ease, transform 0.3s ease;
-      z-index: 1000;
-      overflow: hidden;
-    }
-    /* Cuando está colapsado, se reduce ancho */
-    .sidebar.collapsed {
-      width: 0;
-    }
-    .sidebar .nav-link {
-      color: #fff;
-      white-space: nowrap;
-    }
-    .sidebar .nav-link:hover {
-      background: rgba(255,255,255,0.1);
-    }
-    .sidebar .sidebar-header {
-      position: absolute;
-      top: 0; right: 0;
-      width: 100%; height: 60px;
-      display: flex; align-items: center; justify-content: center;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .sidebar .sidebar-header img {
-      max-height: 40px;
-    }
-    /* Contenido principal se corre cuando se expande */
-    .content-wrapper {
-      transition: margin-right 0.3s ease;
-      padding: 20px;
-    }
-    .content-wrapper.shifted {
-      margin-right: 240px;
-    }
-    /* Botón toggle */
-    #menuToggle {
-      position: fixed; top: 12px; right: 12px;
-      background: #0d6efd; color: #fff;
-      border: none; padding: 8px 12px;
-      border-radius: 4px; z-index: 1100;
-    }
-    #menuToggle:hover { background: #0846b8; }
-    {% endif %}
-  </style>
+  {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-light">
 
-{% if request.resolver_match.url_name != 'login' %}
-  <!-- Botón de toggle -->
-  <button id="menuToggle">
-    <i class="fas fa-bars"></i>
-  </button>
-
-  <!-- Sidebar derecho -->
-  <nav id="sidebar" class="sidebar animate__animated animate__fadeInRight">
-    <div class="sidebar-header">
+    <div aria-live="polite" aria-atomic="true" class="position-relative">
+      <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+        </div>
+    </div>
+    {% if request.resolver_match.url_name != 'login' %}
+  <button id="menuToggle" class="btn btn-primary"><i class="fas fa-bars"></i></button>
+  <nav id="sidebar" class="sidebar">
+      <div class="sidebar-header">
       <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/logo_menu_xsf9gl.png" alt="Logo">
     </div>
     <ul class="nav flex-column mt-3">
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_activos' %}">
-          <i class="fas fa-boxes-stacked me-2"></i> Activos
-        </a>
+        <a class="nav-link" href="{% url 'lista_activos' %}"><i class="fas fa-boxes-stacked me-2"></i> Activos</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_categorias' %}">
-          <i class="fas fa-layer-group me-2"></i> Categorías
-        </a>
+        <a class="nav-link" href="{% url 'lista_categorias' %}"><i class="fas fa-layer-group me-2"></i> Categorías</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_ubicaciones' %}">
-          <i class="fas fa-location-dot me-2"></i> Ubicaciones
-        </a>
+        <a class="nav-link" href="{% url 'lista_ubicaciones' %}"><i class="fas fa-location-dot me-2"></i> Ubicaciones</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_usuarios' %}">
-          <i class="fas fa-users me-2"></i> Usuarios y Roles
-        </a>
+        <a class="nav-link" href="{% url 'lista_usuarios' %}"><i class="fas fa-users me-2"></i> Usuarios y Roles</a>
       </li>
-      {% if user.groups.all.0.name == 'Administrador' or user.groups.all.0.name == 'Supervisor' %}
-      <li class="nav-item {% if request.resolver_match.url_name == 'vista_bitacora' %}active{% endif %}">
-        <a class="nav-link" href="{% url 'vista_bitacora' %}">
-          <i class="fas fa-history"></i>
-          <span>Bitácora</span>
-        </a>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'vista_bitacora' %}"><i class="fas fa-history me-2"></i> Bitácora</a>
       </li>
-      {% endif %}
       <li class="nav-item mt-auto">
-        <a class="nav-link" href="{% url 'logout' %}">
-          <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
-        </a>
+        <a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión</a>
       </li>
     </ul>
   </nav>
 {% endif %}
 
-<!-- Contenido principal -->
 <div id="mainContent" class="content-wrapper {% if request.resolver_match.url_name != 'login' %}shifted{% endif %}">
   {% block content %}{% endblock %}
 </div>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
@@ -146,24 +66,84 @@
 
 {% if request.resolver_match.url_name != 'login' %}
 <script>
+  // Tu script para la barra lateral se queda igual
   document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const content = document.getElementById('mainContent');
     const toggle  = document.getElementById('menuToggle');
-
-    // Recuperar estado
-    const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-    if (collapsed) {
-      sidebar.classList.add('collapsed');
-      content.classList.remove('shifted');
+    if (sidebar && content && toggle) {
+        const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        if (collapsed) {
+          sidebar.style.transform = 'translateX(100%)';
+          content.style.marginRight = '0';
+        } else {
+          sidebar.style.transform = 'translateX(0)';
+          content.style.marginRight = '240px';
+        }
+        toggle.addEventListener('click', () => {
+          const isCollapsed = sidebar.style.transform === 'translateX(100%)';
+          if (isCollapsed) {
+            sidebar.style.transform = 'translateX(0)';
+            content.style.marginRight = '240px';
+            localStorage.setItem('sidebar-collapsed', 'false');
+          } else {
+            sidebar.style.transform = 'translateX(100%)';
+            content.style.marginRight = '0';
+            localStorage.setItem('sidebar-collapsed', 'true');
+          }
+        });
     }
-
-    toggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      content.classList.toggle('shifted');
-      localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
-    });
   });
+</script>
+{% endif %}
+
+{% if messages %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toastContainer = document.querySelector('.toast-container');
+
+    {% for message in messages %}
+        // Obtenemos los datos del mensaje de Django
+        const messageText = "{{ message|escapejs }}";
+        const messageTags = "{{ message.tags }}";
+
+        let toastClass = 'text-bg-secondary'; // Color por defecto (info)
+        let toastIcon = '<i class="fas fa-info-circle me-2"></i>';
+
+        if (messageTags.includes('success')) {
+            toastClass = 'text-bg-success'; // Verde para éxito
+            toastIcon = '<i class="fas fa-check-circle me-2"></i>';
+        } else if (messageTags.includes('error')) {
+            toastClass = 'text-bg-danger'; // Rojo para error
+            toastIcon = '<i class="fas fa-exclamation-triangle me-2"></i>';
+        } else if (messageTags.includes('warning')) {
+            toastClass = 'text-bg-warning'; // Amarillo para advertencia
+            toastIcon = '<i class="fas fa-exclamation-circle me-2"></i>';
+        }
+
+        // Creamos el elemento Toast dinámicamente
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center ${toastClass} border-0 animate__animated animate__fadeInRight`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+
+        toastEl.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">
+              ${toastIcon}
+              ${messageText}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        `;
+
+        // Añadimos el toast al contenedor y lo mostramos
+        toastContainer.appendChild(toastEl);
+        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+        toast.show();
+    {% endfor %}
+});
 </script>
 {% endif %}
 </body>
