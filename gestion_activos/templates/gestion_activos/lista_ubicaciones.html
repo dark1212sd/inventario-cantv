@@ -27,6 +27,7 @@
                     <tr>
                         <td><strong>{{ ubi.nombre }}</strong></td>
                         <td>{{ ubi.descripcion|default:'<span class="text-muted fst-italic">Sin descripción</span>'|safe }}</td>
+
                         <td class="text-center">
                             <a href="{% url 'editar_ubicacion' ubi.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
@@ -50,10 +51,10 @@
 
 {% block extra_js %}
 <script>
+// El script de DataTables que ya habíamos diseñado.
 $(document).ready(function () {
-    // Inicializamos DataTables con la configuración correcta
     $('#tabla-ubicaciones').DataTable({
-        responsive: true, // Se adapta a pantallas pequeñas
+        responsive: true,
         language: {
             url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
         },
@@ -61,12 +62,10 @@ $(document).ready(function () {
              '<"row"<"col-sm-12"t>>' +
              '<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         "columnDefs": [
-            // Desactiva la capacidad de ordenar por la columna de acciones
             { "orderable": false, "targets": 'no-sort' }
         ]
     });
 
-    // Personaliza el campo de búsqueda
     $('.dataTables_filter input')
       .attr('placeholder', 'Buscar...')
       .addClass('form-control form-control-sm');
