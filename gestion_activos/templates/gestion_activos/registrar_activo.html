@@ -1,10 +1,11 @@
 {% extends 'gestion_activos/base.html' %}
+{% block page_title %}
+    <i class="fas fa-layer-group me-2"></i>Registrar Nuevo Activo
+{% endblock %}
 {% block title %}Registrar Activo{% endblock %}
 
 {% block content %}
 <div class="card shadow-sm p-4">
-  <h2 class="text-success fw-bold mb-4">Registrar Nuevo Activo</h2>
-
   <form method="post" novalidate>
     {% csrf_token %}
     <div class="row">

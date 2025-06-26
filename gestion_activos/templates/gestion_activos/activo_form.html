@@ -1,11 +1,13 @@
 {% extends 'gestion_activos/base.html' %}
-
+{% block page_title %}
+    <i class="fas fa-layer-group me-2"></i>Creación De Nuevo Activo
+{% endblock %}
 {% block title %}{{ titulo|default:"Gestionar Activo" }}{% endblock %}
 
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-header py-3">
-    <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Gestionar Activo" }}</h4>
+    <h4 class="m-0 font-weight-bold text-primary">{{ titulo|default:"Nuevo Activo" }}</h4>
   </div>
   <div class="card-body p-4">
     <form method="post" novalidate>

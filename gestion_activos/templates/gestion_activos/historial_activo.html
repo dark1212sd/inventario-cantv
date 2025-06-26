@@ -1,4 +1,7 @@
 {% extends 'gestion_activos/base_usuario.html' %}
+{% block page_title %}
+    <i class="fas fa-layer-group me-2"></i>Logs
+{% endblock %}
 {% load static %}
 
 {% block title %}Historial de {{ activo.nombre }}{% endblock %}
@@ -7,7 +10,6 @@
 <div class="usuario-container">
 
     <div class="usuario-header">
-        <h1 class="mb-0">Historial del Activo</h1>
         <p class="lead" style="font-size: 1.5rem; font-weight: 300;">{{ activo.nombre }} ({{ activo.codigo }})</p>
     </div>
 
