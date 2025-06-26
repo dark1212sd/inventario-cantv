@@ -7,7 +7,6 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
   <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
@@ -18,43 +17,17 @@
 </head>
 <body class="bg-light">
 
-    <div aria-live="polite" aria-atomic="true" class="position-relative">
-      <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
-        </div>
-    </div>
-    {% if request.resolver_match.url_name != 'login' %}
-  <button id="menuToggle" class="btn btn-primary"><i class="fas fa-bars"></i></button>
-  <nav id="sidebar" class="sidebar">
-      <div class="sidebar-header">
-      <img src="https://res.cloudinary.com/dqnmq5tdg/image/upload/v1750315151/logo_menu_xsf9gl.png" alt="Logo">
-    </div>
-    <ul class="nav flex-column mt-3">
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_activos' %}"><i class="fas fa-boxes-stacked me-2"></i> Activos</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_categorias' %}"><i class="fas fa-layer-group me-2"></i> Categorías</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_ubicaciones' %}"><i class="fas fa-location-dot me-2"></i> Ubicaciones</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'lista_usuarios' %}"><i class="fas fa-users me-2"></i> Usuarios y Roles</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'vista_bitacora' %}"><i class="fas fa-history me-2"></i> Bitácora</a>
-      </li>
-      <li class="nav-item mt-auto">
-        <a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión</a>
-      </li>
-    </ul>
-  </nav>
-{% endif %}
-
-<div id="mainContent" class="content-wrapper {% if request.resolver_match.url_name != 'login' %}shifted{% endif %}">
+<div id="mainContent" class="content-wrapper">
   {% block content %}{% endblock %}
 </div>
 
+<div id="django-messages" style="display: none;">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="django-message" data-tag="{{ message.tags }}" data-message="{{ message }}"></div>
+    {% endfor %}
+  {% endif %}
+</div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -62,89 +35,44 @@
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
-{% block extra_js %}{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-{% if request.resolver_match.url_name != 'login' %}
-<script>
-  // Tu script para la barra lateral se queda igual
-  document.addEventListener('DOMContentLoaded', () => {
-    const sidebar = document.getElementById('sidebar');
-    const content = document.getElementById('mainContent');
-    const toggle  = document.getElementById('menuToggle');
-    if (sidebar && content && toggle) {
-        const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-        if (collapsed) {
-          sidebar.style.transform = 'translateX(100%)';
-          content.style.marginRight = '0';
-        } else {
-          sidebar.style.transform = 'translateX(0)';
-          content.style.marginRight = '240px';
-        }
-        toggle.addEventListener('click', () => {
-          const isCollapsed = sidebar.style.transform === 'translateX(100%)';
-          if (isCollapsed) {
-            sidebar.style.transform = 'translateX(0)';
-            content.style.marginRight = '240px';
-            localStorage.setItem('sidebar-collapsed', 'false');
-          } else {
-            sidebar.style.transform = 'translateX(100%)';
-            content.style.marginRight = '0';
-            localStorage.setItem('sidebar-collapsed', 'true');
-          }
-        });
-    }
-  });
-</script>
-{% endif %}
-
-{% if messages %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const toastContainer = document.querySelector('.toast-container');
+    const messages = document.querySelectorAll('.django-message');
+    if (messages.length > 0) {
+        // Tomamos solo el primer mensaje para mostrar, para no abrumar con pop-ups
+        const messageEl = messages[0];
+        const messageText = messageEl.dataset.message;
+        const messageTag = messageEl.dataset.tag;
 
-    {% for message in messages %}
-        // Obtenemos los datos del mensaje de Django
-        const messageText = "{{ message|escapejs }}";
-        const messageTags = "{{ message.tags }}";
+        let iconType = 'info'; // Icono por defecto
+        let titleText = 'Notificación';
 
-        let toastClass = 'text-bg-secondary'; // Color por defecto (info)
-        let toastIcon = '<i class="fas fa-info-circle me-2"></i>';
-
-        if (messageTags.includes('success')) {
-            toastClass = 'text-bg-success'; // Verde para éxito
-            toastIcon = '<i class="fas fa-check-circle me-2"></i>';
-        } else if (messageTags.includes('error')) {
-            toastClass = 'text-bg-danger'; // Rojo para error
-            toastIcon = '<i class="fas fa-exclamation-triangle me-2"></i>';
-        } else if (messageTags.includes('warning')) {
-            toastClass = 'text-bg-warning'; // Amarillo para advertencia
-            toastIcon = '<i class="fas fa-exclamation-circle me-2"></i>';
+        if (messageTag.includes('success')) {
+            iconType = 'success';
+            titleText = '¡Éxito!';
+        } else if (messageTag.includes('error')) {
+            iconType = 'error';
+            titleText = 'Error';
+        } else if (messageTag.includes('warning')) {
+            iconType = 'warning';
+            titleText = 'Advertencia';
         }
 
-        // Creamos el elemento Toast dinámicamente
-        const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center ${toastClass} border-0 animate__animated animate__fadeInRight`;
-        toastEl.setAttribute('role', 'alert');
-        toastEl.setAttribute('aria-live', 'assertive');
-        toastEl.setAttribute('aria-atomic', 'true');
-
-        toastEl.innerHTML = `
-          <div class="d-flex">
-            <div class="toast-body">
-              ${toastIcon}
-              ${messageText}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-          </div>
-        `;
-
-        // Añadimos el toast al contenedor y lo mostramos
-        toastContainer.appendChild(toastEl);
-        const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
-        toast.show();
-    {% endfor %}
+        // Mostramos la alerta de SweetAlert2
+        Swal.fire({
+            title: titleText,
+            text: messageText,
+            icon: iconType,
+            timer: 3000, // La alerta se cierra sola después de 3 segundos
+            timerProgressBar: true,
+            confirmButtonText: 'Entendido'
+        });
+    }
 });
 </script>
-{% endif %}
+{% block extra_js %}{% endblock %}
+
 </body>
 </html>
