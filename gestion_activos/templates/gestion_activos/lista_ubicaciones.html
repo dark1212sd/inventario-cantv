@@ -27,7 +27,6 @@
                     <tr>
                         <td><strong>{{ ubi.nombre }}</strong></td>
                         <td>{{ ubi.descripcion|default:'<span class="text-muted fst-italic">Sin descripción</span>'|safe }}</td>
-
                         <td class="text-center">
                             <a href="{% url 'editar_ubicacion' ubi.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
