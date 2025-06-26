@@ -124,31 +124,47 @@ class PerfilForm(forms.ModelForm):
 # ==============================================================================
 
 class UsuarioForm(forms.ModelForm):
-    email = forms.EmailField(label="Correo Electrónico", required=True)
+    """
+    Formulario definitivo para que un Admin cree o edite usuarios,
+    con estilos automáticos y validaciones robustas.
+    """
+    # Se definen los campos que no están en el modelo User para poder controlarlos
     nombres = forms.CharField(label="Nombres", required=False)
     apellidos = forms.CharField(label="Apellidos", required=False)
     ci = forms.CharField(label="Cédula (CI)", required=False)
     telefono_contacto = forms.CharField(label="Teléfono Principal", required=False)
     grupo = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Rol (Grupo)")
+
+    # El campo de contraseña se define para aplicar el widget y la ayuda
     password = forms.CharField(
         label="Contraseña",
         widget=forms.PasswordInput,
-        required=False,
-        help_text="Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número."
+        required=False,  # Se maneja la obligatoriedad en __init__
+        help_text="Debe tener al menos 8 caracteres, mayúsculas, minúsculas y números."
     )
 
     class Meta:
         model = User
-        # Asegúrate de que todos los campos estén listados aquí
-        fields = ['username', 'email', 'nombres', 'apellidos', 'ci', 'telefono_contacto', 'grupo', 'password']
+        fields = ['username', 'email']  # Campos base del modelo User
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Si es un usuario nuevo, la contraseña es obligatoria
+
+        # --- LÓGICA DE ESTILOS AUTOMÁTICOS ---
+        # Añade las clases de Bootstrap a todos los campos del formulario
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs.update({'class': 'form-select'})
+            elif isinstance(field.widget, forms.PasswordInput):
+                field.widget.attrs.update({'class': 'form-control', 'id': 'id_password'})
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+
+        # Si estamos creando un usuario nuevo, la contraseña es obligatoria
         if not self.instance.pk:
             self.fields['password'].required = True
 
-        # Si estamos editando, poblamos los campos del perfil
+        # Si estamos editando un usuario existente, poblamos los campos
         if self.instance and self.instance.pk:
             if hasattr(self.instance, 'perfil'):
                 self.fields['nombres'].initial = self.instance.perfil.nombres
@@ -157,7 +173,8 @@ class UsuarioForm(forms.ModelForm):
                 self.fields['telefono_contacto'].initial = self.instance.perfil.telefono_contacto
             self.fields['grupo'].initial = self.instance.groups.first()
 
-    # --- VALIDACIONES ---
+    # --- VALIDACIONES PERSONALIZADAS ---
+
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
@@ -192,11 +209,11 @@ class UsuarioForm(forms.ModelForm):
         return password
 
     def save(self, commit=True):
-        # ... (La lógica de guardado que ya teníamos funciona bien con esto)
         user = super().save(commit=False)
         password = self.cleaned_data.get("password")
         if password:
             user.set_password(password)
+
         if commit:
             user.save()
             user.groups.set([self.cleaned_data['grupo']])
@@ -206,4 +223,5 @@ class UsuarioForm(forms.ModelForm):
             perfil.ci = self.cleaned_data.get('ci', '')
             perfil.telefono_contacto = self.cleaned_data.get('telefono_contacto', '')
             perfil.save()
+
         return user
