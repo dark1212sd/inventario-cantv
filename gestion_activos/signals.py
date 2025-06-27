@@ -1,39 +1,60 @@
-# utils/signals.py o gestion_activos/signals.py
 from django.db.models.signals import post_migrate, post_save
 from django.contrib.auth.models import Group, Permission, User
 from django.dispatch import receiver
 from .models import Perfil
 
+
 @receiver(post_migrate)
-def crear_roles(sender, **kwargs):
+def crear_roles_y_permisos(sender, **kwargs):
+    """
+    Crea o actualiza los roles (Grupos) del sistema y les asigna
+    un conjunto de permisos predefinido.
+    """
+    # Definimos los conjuntos de permisos para cada rol
+    permisos_tecnico = Permission.objects.filter(codename__in=[
+        'view_activo',
+        'add_activo',
+        'change_activo',
+        'view_categoria',
+        'view_ubicacion',
+    ])
+
+    permisos_auditor = Permission.objects.filter(codename__in=[
+        'view_activo',
+        'view_categoria',
+        'view_ubicacion',
+        'view_user',
+        'view_perfil',
+        'view_logaccion',
+    ])
+
+    permisos_supervisor = Permission.objects.filter(codename__in=[
+        'view_activo', 'add_activo', 'change_activo'
+    ])
+
+    # Diccionario central de roles y sus permisos
     roles = {
         'Administrador': Permission.objects.all(),
-        'Supervisor': Permission.objects.filter(codename__in=[
-            'view_activo', 'change_activo'
-        ]),
-        'Usuario': Permission.objects.filter(codename__in=[
-            'view_activo'
-        ]),
+        'Supervisor': permisos_supervisor,
+        'Técnico': permisos_tecnico,  # <-- NUEVO ROL AÑADIDO
+        'Auditor': permisos_auditor,  # <-- NUEVO ROL AÑADIDO
+        'Usuario': Permission.objects.filter(codename__in=['view_activo']),
     }
 
-    for nombre_rol, permisos in roles.items():
+    print("Creando y/o actualizando roles del sistema...")
+    for nombre_rol, permisos_rol in roles.items():
         grupo, creado = Group.objects.get_or_create(name=nombre_rol)
-        grupo.permissions.set(permisos)
-        grupo.save()
+        grupo.permissions.set(permisos_rol)
+        if creado:
+            print(f"-> Grupo '{nombre_rol}' creado exitosamente.")
+        else:
+            print(f"-> Permisos del grupo '{nombre_rol}' actualizados.")
 
 
 @receiver(post_save, sender=User)
-def crear_o_actualizar_perfil_usuario(sender, instance, created, **kwargs):
+def crear_perfil_usuario(sender, instance, created, **kwargs):
     """
-    Crea un perfil para cada nuevo usuario y se asegura de que exista al guardar.
+    Crea un perfil automáticamente para cada nuevo usuario.
     """
     if created:
-        Perfil.objects.create(user=instance)
-
-    # Esta línea asegura que el perfil se guarde, pero puede fallar si no existe.
-    # La envolvemos en un bloque try/except para robustez, aunque el paso 2 es la solución real.
-    try:
-        instance.perfil.save()
-    except Perfil.DoesNotExist:
-        # Si el perfil no existe por alguna razón (como en usuarios antiguos), lo creamos.
-        Perfil.objects.create(user=instance)
+        Perfil.objects.get_or_create(user=instance)
